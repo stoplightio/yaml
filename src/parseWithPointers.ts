@@ -1,4 +1,4 @@
-import { IParserResult, IParserResultPointers, SourceMapParser } from '@stoplight/types';
+import { IParserResult, IParserResultPointers } from '@stoplight/types';
 import { load as loadAST, YAMLException } from 'yaml-ast-parser';
 
 // import { IParser, IParserResult, IParserResultPointers, MessageSeverity } from '../../types';
@@ -10,19 +10,19 @@ export interface IYamlParserOpts {
   maxPointerDepth?: number;
 }
 
-export const yamlParser = (opts: IYamlParserOpts = {}): SourceMapParser => (input: string) => {
+export const parseWithPointers = <T>(value: string, opts: IYamlParserOpts = {}): IParserResult<T> => {
   const parsed: IParserResult = {
     data: {},
     pointers: {},
     validations: [],
   };
 
-  if (!input || !input.trim().length) return parsed;
+  if (!value || !value.trim().length) return parsed;
 
-  const ast = loadAST(input);
+  const ast = loadAST(value);
   if (!ast) return parsed;
 
-  const lineMap = computeLineMap(input);
+  const lineMap = computeLineMap(value);
 
   parsed.pointers = {
     '': getLoc(lineMap, {

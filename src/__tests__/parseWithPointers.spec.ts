@@ -1,4 +1,4 @@
-import { lineForPosition, yamlParser } from '../parseWithPointers';
+import { lineForPosition, parseWithPointers } from '../parseWithPointers';
 import * as HugeJSON from './fixtures/huge-json.json';
 import { HugeYAML } from './fixtures/huge-yaml';
 
@@ -94,25 +94,26 @@ describe('yaml parser', () => {
 
   test('parse simple', () => {
     expect(
-      yamlParser()(`hello: world
+      parseWithPointers(`hello: world
 address:
   street: 123`)
     ).toMatchSnapshot();
   });
 
   test('parse diverse', () => {
-    const result = yamlParser()(diverse);
+    const result = parseWithPointers(diverse);
     delete result.validations;
     expect(result).toMatchSnapshot();
   });
 
   test('parse huge', () => {
-    const result = yamlParser()(HugeYAML);
+    const result = parseWithPointers(HugeYAML);
     expect(result.data).toEqual(HugeJSON);
   });
 
   test('max depth option', () => {
-    const result = yamlParser({ maxPointerDepth: 3 })(`prop1: true
+    const result = parseWithPointers(
+      `prop1: true
 prop2: true
 prop3:
   prop3-1:
@@ -120,16 +121,21 @@ prop3:
       prop3-1-1-1: true
     prop3-1-2:
       - one
-      - two`);
+      - two`,
+      { maxPointerDepth: 3 }
+    );
 
     expect(result.pointers).toMatchSnapshot();
   });
 
   test('report errors', () => {
-    const result = yamlParser({ maxPointerDepth: 3 })(`prop1: true
+    const result = parseWithPointers(
+      `prop1: true
 prop2: true
   inner 1
-  val: 2`);
+  val: 2`,
+      { maxPointerDepth: 3 }
+    );
 
     expect(result.validations).toEqual([
       {

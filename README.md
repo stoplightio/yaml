@@ -1,6 +1,6 @@
 # @stoplight/yaml
 
-[![Maintainability](https://api.codeclimate.com/v1/badges/85d2215f8b1e8a15214f/maintainability)](https://codeclimate.com/github/stoplightio/json/maintainability) [![Test Coverage](https://api.codeclimate.com/v1/badges/85d2215f8b1e8a15214f/test_coverage)](https://codeclimate.com/github/stoplightio/json/test_coverage)
+[![Maintainability](https://api.codeclimate.com/v1/badges/5c6d61926d8f87b38b39/maintainability)](https://codeclimate.com/github/stoplightio/yaml/maintainability) [![Test Coverage](https://api.codeclimate.com/v1/badges/5c6d61926d8f87b38b39/test_coverage)](https://codeclimate.com/github/stoplightio/yaml/test_coverage)
 
 Useful functions when working with YAML.
 

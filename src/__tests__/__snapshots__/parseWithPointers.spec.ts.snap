@@ -1,0 +1,299 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`yaml parser max depth option 1`] = `
+Object {
+  "": Object {
+    "end": Object {
+      "line": 9,
+    },
+    "start": Object {
+      "line": 1,
+    },
+  },
+  "/prop1": Object {
+    "end": Object {
+      "line": 1,
+    },
+    "start": Object {
+      "line": 1,
+    },
+  },
+  "/prop2": Object {
+    "end": Object {
+      "line": 2,
+    },
+    "start": Object {
+      "line": 2,
+    },
+  },
+  "/prop3": Object {
+    "end": Object {
+      "line": 9,
+    },
+    "start": Object {
+      "line": 3,
+    },
+  },
+  "/prop3/prop3-1": Object {
+    "end": Object {
+      "line": 9,
+    },
+    "start": Object {
+      "line": 4,
+    },
+  },
+  "/prop3/prop3-1/prop3-1-1": Object {
+    "end": Object {
+      "line": 6,
+    },
+    "start": Object {
+      "line": 5,
+    },
+  },
+  "/prop3/prop3-1/prop3-1-2": Object {
+    "end": Object {
+      "line": 9,
+    },
+    "start": Object {
+      "line": 7,
+    },
+  },
+}
+`;
+
+exports[`yaml parser parse diverse 1`] = `
+Object {
+  "data": Object {
+    "content": "Or we
+can auto
+convert line breaks
+to save space",
+    "json": Array [
+      "rigid",
+      "better for data interchange",
+    ],
+    "object": Object {
+      "array": Array [
+        Object {
+          "null_value": null,
+        },
+        Object {
+          "boolean": true,
+        },
+        Object {
+          "integer": 1,
+        },
+      ],
+      "key": "value",
+    },
+    "paragraph": "Blank lines denote
+paragraph breaks
+",
+    "yaml": Array [
+      "slim and flexible",
+      123,
+      true,
+    ],
+  },
+  "pointers": Object {
+    "": Object {
+      "end": Object {
+        "line": 28,
+      },
+      "start": Object {
+        "line": 1,
+      },
+    },
+    "/content": Object {
+      "end": Object {
+        "line": 28,
+      },
+      "start": Object {
+        "line": 24,
+      },
+    },
+    "/json": Object {
+      "end": Object {
+        "line": 10,
+      },
+      "start": Object {
+        "line": 7,
+      },
+    },
+    "/json/0": Object {
+      "end": Object {
+        "line": 8,
+      },
+      "start": Object {
+        "line": 8,
+      },
+    },
+    "/json/1": Object {
+      "end": Object {
+        "line": 9,
+      },
+      "start": Object {
+        "line": 9,
+      },
+    },
+    "/object": Object {
+      "end": Object {
+        "line": 20,
+      },
+      "start": Object {
+        "line": 14,
+      },
+    },
+    "/object/array": Object {
+      "end": Object {
+        "line": 20,
+      },
+      "start": Object {
+        "line": 16,
+      },
+    },
+    "/object/array/0": Object {
+      "end": Object {
+        "line": 17,
+      },
+      "start": Object {
+        "line": 17,
+      },
+    },
+    "/object/array/0/null_value": Object {
+      "end": Object {
+        "line": 17,
+      },
+      "start": Object {
+        "line": 17,
+      },
+    },
+    "/object/array/1": Object {
+      "end": Object {
+        "line": 18,
+      },
+      "start": Object {
+        "line": 18,
+      },
+    },
+    "/object/array/1/boolean": Object {
+      "end": Object {
+        "line": 18,
+      },
+      "start": Object {
+        "line": 18,
+      },
+    },
+    "/object/array/2": Object {
+      "end": Object {
+        "line": 19,
+      },
+      "start": Object {
+        "line": 19,
+      },
+    },
+    "/object/array/2/integer": Object {
+      "end": Object {
+        "line": 19,
+      },
+      "start": Object {
+        "line": 19,
+      },
+    },
+    "/object/key": Object {
+      "end": Object {
+        "line": 15,
+      },
+      "start": Object {
+        "line": 15,
+      },
+    },
+    "/paragraph": Object {
+      "end": Object {
+        "line": 23,
+      },
+      "start": Object {
+        "line": 20,
+      },
+    },
+    "/yaml": Object {
+      "end": Object {
+        "line": 14,
+      },
+      "start": Object {
+        "line": 10,
+      },
+    },
+    "/yaml/0": Object {
+      "end": Object {
+        "line": 11,
+      },
+      "start": Object {
+        "line": 11,
+      },
+    },
+    "/yaml/1": Object {
+      "end": Object {
+        "line": 12,
+      },
+      "start": Object {
+        "line": 12,
+      },
+    },
+    "/yaml/2": Object {
+      "end": Object {
+        "line": 13,
+      },
+      "start": Object {
+        "line": 13,
+      },
+    },
+  },
+}
+`;
+
+exports[`yaml parser parse simple 1`] = `
+Object {
+  "data": Object {
+    "address": Object {
+      "street": 123,
+    },
+    "hello": "world",
+  },
+  "pointers": Object {
+    "": Object {
+      "end": Object {
+        "line": 3,
+      },
+      "start": Object {
+        "line": 1,
+      },
+    },
+    "/address": Object {
+      "end": Object {
+        "line": 3,
+      },
+      "start": Object {
+        "line": 2,
+      },
+    },
+    "/address/street": Object {
+      "end": Object {
+        "line": 3,
+      },
+      "start": Object {
+        "line": 3,
+      },
+    },
+    "/hello": Object {
+      "end": Object {
+        "line": 1,
+      },
+      "start": Object {
+        "line": 1,
+      },
+    },
+  },
+  "validations": Array [],
+}
+`;

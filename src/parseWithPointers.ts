@@ -1,9 +1,7 @@
-import { IParserResult, IParserResultPointers } from '@stoplight/types';
+import { IParserResult, IParserResultPointers, LogLevel } from '@stoplight/types';
 import { load as loadAST, YAMLException } from 'yaml-ast-parser';
 
-// import { IParser, IParserResult, IParserResultPointers, MessageSeverity } from '../../types';
-
-const get = require('lodash/get');
+import get = require('lodash/get');
 
 export interface IYamlParserOpts {
   // Increase performance by limiting how deep into the object we recurse to generate pointers.
@@ -164,8 +162,7 @@ const transformErrors = (errors: YAMLException[]): any[] => {
     const validation: any = {
       ruleId: error.name,
       msg: error.reason,
-      // FIXME when LogLevel enum published in types package: error.isWarning ? LogLevel.Warn : LogLevel.Fatal
-      level: error.isWarning ? 40 : 60,
+      level: error.isWarning ? LogLevel.Warn : LogLevel.Fatal,
     };
 
     if (error.mark && error.mark.line) {

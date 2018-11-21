@@ -18,16 +18,17 @@ yarn add @stoplight/yaml
 
 ### Usage
 
+- **[parseWithPointers](https://stoplightio.github.io/yaml/globals.html#parseWithPointers)**: Parses YAML into JSON and also returns a source map that includes a JSON path pointer for every property in the result (with line information).
+
 ```ts
 // basic example of parseWithPointers
 import { parseWithPointers } from "@stoplight/yaml";
 
 const result = parseWithPointers("foo: bar");
+
 console.log(result.data); // => the {foo: "bar"} JS object
 console.log(result.pointers); // => the source map with a single "#/foo" pointer that has position info for the foo property
 ```
-
-- **parseWithPointers**: Like `JSON.parse(val)` but also returns a source map that includes a JSON path pointer for every property in the result (with line information).
 
 ### Contributing
 

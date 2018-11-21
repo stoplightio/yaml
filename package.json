@@ -20,15 +20,14 @@
   "license": "Apache-2.0",
   "main": "src/index.ts",
   "files": [
-    "**/*",
-    "!__tests__"
+    "**/*"
   ],
   "engines": {
     "node": ">=8.3.0"
   },
   "scripts": {
     "build": "sl-scripts build",
-    "build.docs": "sl-scripts build:tsdoc",
+    "build.docs": "sl-scripts build:typedoc",
     "commit": "git-cz",
     "lint": "sl-scripts lint",
     "lint.fix": "yarn lint --fix",
@@ -46,7 +45,7 @@
     "yaml-ast-parser": "0.0.43"
   },
   "devDependencies": {
-    "@stoplight/scripts": "2.x.x",
+    "@stoplight/scripts": "3.0.2",
     "typescript": "3.1.6"
   },
   "lint-staged": {

@@ -18,7 +18,7 @@ yarn add @stoplight/yaml
 
 ### Usage
 
-- **[parseWithPointers](https://stoplightio.github.io/yaml/globals.html#parseWithPointers)**: Parses YAML into JSON and also returns a source map that includes a JSON path pointer for every property in the result (with line information).
+- **[parseWithPointers](https://stoplightio.github.io/yaml/globals.html#parsewithpointers)**: Parses YAML into JSON and also returns a source map that includes a JSON path pointer for every property in the result (with line information).
 
 ```ts
 // basic example of parseWithPointers
@@ -40,4 +40,4 @@ console.log(result.pointers); // => the source map with a single "#/foo" pointer
 6. Stage relevant files to git.
 7. Commit: `yarn commit`. _NOTE: Commits that don't follow the [conventional](https://github.com/marionebl/commitlint/tree/master/%40commitlint/config-conventional) format will be rejected. `yarn commit` creates this format for you, or you can put it together manually and then do a regular `git commit`._
 8. Push: `git push`.
-9. Open PR targeting the `develop` branch.
+9. Open PR targeting the `next` branch.

@@ -40,13 +40,13 @@
     "test.watch": "yarn test --watch"
   },
   "dependencies": {
-    "@stoplight/types": "2.0.0",
+    "@stoplight/types": "3.x.x",
     "lodash": "4.x.x",
     "yaml-ast-parser": "0.0.43"
   },
   "devDependencies": {
-    "@stoplight/scripts": "3.0.2",
-    "typescript": "3.1.6"
+    "@stoplight/scripts": "3.1.0",
+    "typescript": "3.2.2"
   },
   "lint-staged": {
     "*.{ts,tsx}$": [

@@ -41,7 +41,6 @@
   },
   "dependencies": {
     "@stoplight/types": "3.x.x",
-    "js-yaml": "3.x.x",
     "lodash": "4.x.x",
     "yaml-ast-parser": "0.0.43"
   },

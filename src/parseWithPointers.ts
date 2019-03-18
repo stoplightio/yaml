@@ -10,12 +10,7 @@ import { load as loadAST, YAMLException, YAMLNode } from 'yaml-ast-parser';
 
 import get = require('lodash/get');
 
-export interface IYamlParserOpts {
-  // Increase performance by limiting how deep into the object we recurse to generate pointers.
-  maxPointerDepth?: number;
-}
-
-export const parseWithPointers = <T>(value: string, opts: IYamlParserOpts = {}): IParserResult<T> => {
+export const parseWithPointers = <T>(value: string): IParserResult<T> => {
   const lineMap = computeLineMap(value);
   const ast = loadAST(value);
 

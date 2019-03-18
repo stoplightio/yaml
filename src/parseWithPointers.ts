@@ -1,5 +1,12 @@
-import { IParserResult, IParserResultPointers, LogLevel } from '@stoplight/types';
-import { load as loadAST, YAMLException } from 'yaml-ast-parser';
+import {
+  IParserResult,
+  JSONPath,
+  IPosition,
+  ILocation,
+  IDiagnostic,
+  DiagnosticSeverity
+} from '@stoplight/types';
+import { load as loadAST, YAMLException, YAMLNode } from 'yaml-ast-parser';
 
 import get = require('lodash/get');
 
@@ -9,30 +16,36 @@ export interface IYamlParserOpts {
 }
 
 export const parseWithPointers = <T>(value: string, opts: IYamlParserOpts = {}): IParserResult<T> => {
-  const parsed: IParserResult = {
-    data: {},
-    pointers: {},
-    validations: [],
+  const lineMap = computeLineMap(value);
+  const ast = loadAST(value);
+
+  const parsed: IParserResult<T> = {
+    data: {} as T,
+    diagnostics: [],
+    getJsonPathForPosition({ line, character }: IPosition): JSONPath | undefined {
+      if (line >= lineMap.length || character >= lineMap[line]) {
+        return;
+      }
+
+      const path: JSONPath = [];
+      findNodeAtOffset(ast, (line === 0 ? 0 : lineMap[line - 1]) + character, path);
+      return path;
+    },
+    getLocationForJsonPath(path: JSONPath): ILocation | undefined {
+      const node = findNodeAtPath(ast, path);
+      if (node === undefined) return;
+
+      const { startPosition, endPosition } = node;
+      return getLoc(lineMap, { start: startPosition, end: endPosition });
+    }
   };
 
-  if (!value || !value.trim().length) return parsed;
-
-  const ast = loadAST(value);
   if (!ast) return parsed;
 
-  const lineMap = computeLineMap(value);
-
-  parsed.pointers = {
-    '': getLoc(lineMap, {
-      start: 0,
-      end: ast.endPosition,
-    }),
-  };
-
-  parsed.data = walk([], {}, ast.mappings, parsed.pointers, lineMap, 1, opts);
+  walk<T>(parsed.data, ast.mappings, lineMap);
 
   if (ast.errors) {
-    parsed.validations = transformErrors(ast.errors);
+    parsed.diagnostics = transformErrors(ast.errors);
   }
 
   return parsed;
@@ -79,39 +92,27 @@ export const lineForPosition = (pos: number, lines: number[], start: number = 0,
   }
 };
 
-const walk = (
-  path: string[],
-  container: any,
-  nodes: any[],
-  pointers: IParserResultPointers,
+const walk = <T>(
+  container: T,
+  nodes: YAMLNode[],
   lineMap: number[],
-  depth: number,
-  opts: IYamlParserOpts
 ) => {
-  if (opts.maxPointerDepth && opts.maxPointerDepth < depth) return container;
-
   for (const i in nodes) {
     if (!nodes.hasOwnProperty(i)) continue;
 
     const index = parseInt(i);
     const node = nodes[index];
     const key = node.key ? node.key.value : index;
-    const nodePath = path.concat(key);
-
-    pointers[`/${nodePath.join('/')}`] = getLoc(lineMap, {
-      start: node.startPosition,
-      end: node.endPosition,
-    });
 
     const mappings = get(node, 'mappings', get(node, 'value.mappings'));
     if (mappings) {
-      container[key] = walk(nodePath, {}, mappings, pointers, lineMap, depth + 1, opts);
+      container[key] = walk({}, mappings, lineMap);
       continue;
     }
 
     const items = get(node, 'items', get(node, 'value.items'));
     if (items) {
-      container[key] = walk(nodePath, [], items, pointers, lineMap, depth + 1, opts);
+      container[key] = walk([], items, lineMap);
       continue;
     }
 
@@ -137,44 +138,97 @@ const walk = (
 
 // builds up the line map, for use by linesForPosition
 const computeLineMap = (input: string) => {
+  // fixme: support CRLF and CR
   const lines = input.split(/\n/);
   const lineMap: number[] = [];
 
   let sum = 0;
   for (const line of lines) {
+    sum += line.length + 1; // todo: verify how combining marks and such are treated by yaml parser
     lineMap.push(sum);
-    sum += line.length + 1;
   }
 
   return lineMap;
 };
 
-const getLoc = (lineMap: number[], { start = 0, end = 0 }) => {
+const getLoc = (lineMap: number[], { start = 0, end = 0 }): ILocation => {
+  const startLine = lineForPosition(start, lineMap);
+  const endLine = lineForPosition(end, lineMap);
   return {
-    start: { line: lineForPosition(start, lineMap) },
-    end: { line: lineForPosition(end, lineMap) },
+    uri: '',
+    range: {
+      start: {
+        line: startLine,
+        character: start - lineMap[startLine - 1],
+      },
+      end: {
+        line: endLine,
+        character: end - lineMap[endLine - 1 ]
+      },
+    }
   };
 };
 
 const transformErrors = (errors: YAMLException[]): any[] => {
-  const validations: any[] = [];
+  const validations: IDiagnostic[] = [];
   for (const error of errors) {
-    const validation: any = {
-      ruleId: error.name,
-      msg: error.reason,
-      level: error.isWarning ? LogLevel.Warn : LogLevel.Fatal,
-    };
-
-    if (error.mark && error.mark.line) {
-      validation.location = {
+    const validation: IDiagnostic = {
+      code: error.name,
+      message: error.reason,
+      severity: error.isWarning ? DiagnosticSeverity.Warning : DiagnosticSeverity.Error,
+      range: {
         start: {
           line: error.mark.line,
+          character: error.mark.column,
         },
-      };
-    }
+        end: {
+          line: error.mark.line,
+          character: error.mark.position, // todo: shall we consume toLineEnd?
+        }
+      }
+    };
 
     validations.push(validation);
   }
 
   return validations;
 };
+
+function findNodeAtOffset(node: YAMLNode, offset: number, path: JSONPath): YAMLNode | undefined {
+  if (offset >= node.startPosition && offset < node.endPosition) {
+    const { mappings } = node;
+    if (Array.isArray(mappings)) {
+      for (let i = 0; i < mappings.length; i++) {
+        let item = findNodeAtOffset(mappings[i], offset, path);
+        if (item) {
+          path.push(item.key.value);
+          return findNodeAtOffset(item.value, offset, path);
+        }
+      }
+    }
+
+    return node;
+  }
+
+  return;
+}
+
+function findNodeAtPath(node: YAMLNode, path: JSONPath) {
+  pathLoop:
+  for (const segment of path) {
+    if (Array.isArray(node.mappings)) {
+      for (const item of node.mappings) {
+        if (item.key.value === segment) {
+          node = item.value;
+          continue pathLoop;
+        }
+      }
+
+      return;
+    }
+
+    return node.parent;
+  }
+
+  return node.parent;
+}

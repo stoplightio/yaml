@@ -92,17 +92,60 @@ describe('yaml parser', () => {
     expect(lineForPosition(599, lines)).toEqual(27);
   });
 
-  test('parse simple', () => {
-    expect(
-      parseWithPointers(`hello: world
+  describe('simple fixture', () => {
+    const fixture = `hello: world
 address:
-  street: 123`)
-    ).toMatchSnapshot();
+  street: 123`;
+
+    test('parses the fixture', () => {
+      expect(parseWithPointers(fixture).data).toMatchSnapshot();
+    });
+
+    test('getJsonPathForPosition', () => {
+      const { getJsonPathForPosition } =
+        parseWithPointers(`hello: world
+address:
+  street: 123`);
+
+      expect(getJsonPathForPosition({
+        character: 4,
+        line: 2,
+      })).toEqual(['address', 'street']);
+      expect(getJsonPathForPosition({
+        character: 3,
+        line: 1,
+      })).toEqual(['address']);
+      expect(getJsonPathForPosition({
+        character: 4,
+        line: 0,
+      })).toEqual(['hello']);
+    });
+
+    test('getLocationForJsonPath', () => {
+      const { getLocationForJsonPath } =
+        parseWithPointers(`hello: world
+address:
+  street: 123`);
+
+      expect(getLocationForJsonPath(['address'])).toEqual({
+        uri: '',
+        range: {
+          start: {
+            line: 1,
+            character: 0,
+          },
+          end: {
+            line: 2,
+            character: 13,
+          }
+        }
+      });
+    });
   });
+
 
   test('parse diverse', () => {
     const result = parseWithPointers(diverse);
-    delete result.validations;
     expect(result).toMatchSnapshot();
   });
 
@@ -125,7 +168,7 @@ prop3:
       { maxPointerDepth: 3 }
     );
 
-    expect(result.pointers).toMatchSnapshot();
+    expect(result.diagnostics).toMatchSnapshot();
   });
 
   test('report errors', () => {
@@ -137,7 +180,7 @@ prop2: true
       { maxPointerDepth: 3 }
     );
 
-    expect(result.validations).toEqual([
+    expect(result.diagnostics).toEqual([
       {
         level: 60,
         location: { start: { line: 3 } },

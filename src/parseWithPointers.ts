@@ -46,7 +46,7 @@ export const parseWithPointers = <T>(value: string): IParserResult<T> => {
  */
 export const lineForPosition = (pos: number, lines: number[], start: number = 0, end?: number): number => {
   // position 0 is always line 0
-  if (pos === 0) {
+  if (pos === 0 || lines.length === 0 || pos < lines[0]) {
     return 0;
   }
 
@@ -147,11 +147,11 @@ const getLoc = (lineMap: number[], { start = 0, end = 0 }): ILocation => {
     range: {
       start: {
         line: startLine,
-        character: start - lineMap[startLine - 1],
+        character: start - (startLine === 0 ? 0 : lineMap[startLine - 1]),
       },
       end: {
         line: endLine,
-        character: end - lineMap[endLine - 1],
+        character: end - (endLine === 0 ? 0 : lineMap[endLine - 1]),
       },
     },
   };

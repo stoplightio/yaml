@@ -214,8 +214,8 @@ function findNodeAtPath(node: YAMLNode, path: JSONPath) {
       return;
     }
 
-    return node.parent;
+    return node;
   }
 
-  return node.parent;
+  return node;
 }

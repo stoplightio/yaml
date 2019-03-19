@@ -1,11 +1,4 @@
-import {
-  IParserResult,
-  JSONPath,
-  IPosition,
-  ILocation,
-  IDiagnostic,
-  DiagnosticSeverity
-} from '@stoplight/types';
+import { DiagnosticSeverity, IDiagnostic, ILocation, IParserResult, IPosition, JSONPath } from '@stoplight/types';
 import { load as loadAST, YAMLException, YAMLNode } from 'yaml-ast-parser';
 
 import get = require('lodash/get');
@@ -31,9 +24,8 @@ export const parseWithPointers = <T>(value: string): IParserResult<T> => {
       if (node === undefined) return;
 
       const { startPosition, endPosition } = node;
-      console.log(lineMap.indexOf(endPosition));
       return getLoc(lineMap, { start: startPosition, end: endPosition });
-    }
+    },
   };
 
   if (!ast) return parsed;
@@ -93,11 +85,7 @@ export const lineForPosition = (pos: number, lines: number[], start: number = 0,
   }
 };
 
-const walk = <T>(
-  container: T,
-  nodes: YAMLNode[],
-  lineMap: number[],
-) => {
+const walk = <T>(container: T, nodes: YAMLNode[], lineMap: number[]) => {
   for (const i in nodes) {
     if (!nodes.hasOwnProperty(i)) continue;
 
@@ -163,9 +151,9 @@ const getLoc = (lineMap: number[], { start = 0, end = 0 }): ILocation => {
       },
       end: {
         line: endLine,
-        character: end - lineMap[endLine - 1]
+        character: end - lineMap[endLine - 1],
       },
-    }
+    },
   };
 };
 
@@ -184,8 +172,8 @@ const transformErrors = (errors: YAMLException[]): any[] => {
         end: {
           line: error.mark.line,
           character: error.mark.position, // todo: shall we consume toLineEnd?
-        }
-      }
+        },
+      },
     };
 
     validations.push(validation);
@@ -198,8 +186,8 @@ function findNodeAtOffset(node: YAMLNode, offset: number, path: JSONPath): YAMLN
   if (offset >= node.startPosition && offset < node.endPosition) {
     const { mappings } = node;
     if (Array.isArray(mappings)) {
-      for (let i = 0; i < mappings.length; i++) {
-        let item = findNodeAtOffset(mappings[i], offset, path);
+      for (const mapping of mappings) {
+        const item = findNodeAtOffset(mapping, offset, path);
         if (item) {
           path.push(item.key.value);
           return findNodeAtOffset(item.value, offset, path);
@@ -214,8 +202,7 @@ function findNodeAtOffset(node: YAMLNode, offset: number, path: JSONPath): YAMLN
 }
 
 function findNodeAtPath(node: YAMLNode, path: JSONPath) {
-  pathLoop:
-  for (const segment of path) {
+  pathLoop: for (const segment of path) {
     if (Array.isArray(node.mappings)) {
       for (const item of node.mappings) {
         if (item.key.value === segment) {

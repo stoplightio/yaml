@@ -1,6 +1,11 @@
+import * as fs from 'fs';
+import { join } from 'path';
+
 import { lineForPosition, parseWithPointers } from '../parseWithPointers';
 import * as HugeJSON from './fixtures/huge-json.json';
 import { HugeYAML } from './fixtures/huge-yaml';
+
+const petStore = fs.readFileSync(join(__dirname, './fixtures/petstore.oas2.yaml'), 'utf-8');
 
 const diverse = `---
   # <- yaml supports comments, json does not
@@ -92,6 +97,32 @@ describe('yaml parser', () => {
     expect(lineForPosition(599, lines)).toEqual(27);
   });
 
+  describe('getLocationForJsonPath', () => {
+    describe('pet store fixture', () => {
+      const { getLocationForJsonPath } = parseWithPointers(petStore);
+
+      test.each`
+        start      | end        | path
+        ${[10, 11]} | ${[10, 29]}  | ${['info', 'contact', 'email']}
+        ${[29, 0]} | ${[31, 9]}  | ${['schemes']}
+      `('should return proper location for given JSONPath $path', ({ start, end, path }) => {
+        expect(getLocationForJsonPath(path)).toEqual({
+          range: {
+            start: {
+              character: start[1],
+              line: start[0],
+            },
+            end: {
+              character: end[1],
+              line: end[0],
+            },
+          },
+        });
+      });
+    });
+
+  });
+
   describe('simple fixture', () => {
     const fixture = `hello: world
 address:
@@ -154,30 +185,12 @@ address:
     expect(result.data).toEqual(HugeJSON);
   });
 
-  test('max depth option', () => {
-    const result = parseWithPointers(
-      `prop1: true
-prop2: true
-prop3:
-  prop3-1:
-    prop3-1-1:
-      prop3-1-1-1: true
-    prop3-1-2:
-      - one
-      - two`,
-      { maxPointerDepth: 3 }
-    );
-
-    expect(result.diagnostics).toMatchSnapshot();
-  });
-
   test('report errors', () => {
     const result = parseWithPointers(
       `prop1: true
 prop2: true
   inner 1
   val: 2`,
-      { maxPointerDepth: 3 }
     );
 
     expect(result.diagnostics).toEqual([

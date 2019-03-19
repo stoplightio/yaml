@@ -31,6 +31,7 @@ export const parseWithPointers = <T>(value: string): IParserResult<T> => {
       if (node === undefined) return;
 
       const { startPosition, endPosition } = node;
+      console.log(lineMap.indexOf(endPosition));
       return getLoc(lineMap, { start: startPosition, end: endPosition });
     }
   };
@@ -52,9 +53,9 @@ export const parseWithPointers = <T>(value: string): IParserResult<T> => {
  * This is key to making the yaml line mapping performant.
  */
 export const lineForPosition = (pos: number, lines: number[], start: number = 0, end?: number): number => {
-  // position 0 is always line 1
+  // position 0 is always line 0
   if (pos === 0) {
-    return 1;
+    return 0;
   }
 
   // start with max range, 0 - lines.length
@@ -70,6 +71,11 @@ export const lineForPosition = (pos: number, lines: number[], start: number = 0,
 
   // if pos is between target and the next line's position, we're good!
   const nextLinePos = lines[Math.min(target + 1, lines.length)];
+
+  if (pos === lines[target]) {
+    return target;
+  }
+
   if (pos >= lines[target] && pos <= nextLinePos) {
     if (pos === nextLinePos) {
       return target + 2;
@@ -150,7 +156,6 @@ const getLoc = (lineMap: number[], { start = 0, end = 0 }): ILocation => {
   const startLine = lineForPosition(start, lineMap);
   const endLine = lineForPosition(end, lineMap);
   return {
-    uri: '',
     range: {
       start: {
         line: startLine,
@@ -158,7 +163,7 @@ const getLoc = (lineMap: number[], { start = 0, end = 0 }): ILocation => {
       },
       end: {
         line: endLine,
-        character: end - lineMap[endLine - 1 ]
+        character: end - lineMap[endLine - 1]
       },
     }
   };

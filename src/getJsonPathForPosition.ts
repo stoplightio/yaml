@@ -26,10 +26,12 @@ function* walk(node: YAMLNode): IterableIterator<YAMLNode> {
       break;
     case Kind.MAPPING:
       yield node.key;
-      if (node.value.kind === Kind.MAP || node.value.kind === Kind.SEQ) {
-        yield* walk(node.value);
-      } else {
-        yield node.value;
+      if (node.value !== null) {
+        if (node.value.kind === Kind.MAP || node.value.kind === Kind.SEQ) {
+          yield* walk(node.value);
+        } else {
+          yield node.value;
+        }
       }
       break;
     case Kind.SEQ:

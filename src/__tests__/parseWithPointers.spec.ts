@@ -1,3 +1,4 @@
+import { DiagnosticSeverity } from '@stoplight/types';
 import * as fs from 'fs';
 import { join } from 'path';
 
@@ -6,6 +7,9 @@ import * as HugeJSON from './fixtures/huge-json.json';
 import { HugeYAML } from './fixtures/huge-yaml';
 
 const petStore = fs.readFileSync(join(__dirname, './fixtures/petstore.oas2.yaml'), 'utf-8');
+const simple = `hello: world
+address:
+  street: 123`;
 
 const diverse = `---
   # <- yaml supports comments, json does not
@@ -37,64 +41,65 @@ const diverse = `---
       to save space`;
 
 describe('yaml parser', () => {
-  test('lineForPosition simple', () => {
-    const lines = [0, 13, 22, 36];
-    // first line
-    expect(lineForPosition(0, lines)).toEqual(1);
+  describe('lineForPosition', () => {
+    test('simple fixture', () => {
+      const lines = [13, 22, 36];
+      // first line
+      expect(lineForPosition(0, lines)).toEqual(0);
 
-    expect(lineForPosition(12, lines)).toEqual(1);
-    expect(lineForPosition(35, lines)).toEqual(3);
+      expect(lineForPosition(12, lines)).toEqual(0);
+      expect(lineForPosition(35, lines)).toEqual(2);
 
-    // last line
-    expect(lineForPosition(36, lines)).toEqual(4);
-    expect(lineForPosition(39, lines)).toEqual(4);
-  });
+      // last line
+      expect(lineForPosition(36, lines)).toEqual(3);
+      expect(lineForPosition(39, lines)).toEqual(3);
+    });
 
-  test('lineForPosition diverse', () => {
-    const lines = [
-      0,
-      4,
-      49,
-      94,
-      129,
-      148,
-      149,
-      157,
-      169,
-      203,
-      211,
-      235,
-      245,
-      256,
-      266,
-      281,
-      292,
-      312,
-      334,
-      353,
-      368,
-      393,
-      394,
-      417,
-      431,
-      443,
-      484,
-    ];
+    test('diverse fixture', () => {
+      const lines = [
+        4,
+        49,
+        94,
+        129,
+        148,
+        149,
+        157,
+        169,
+        203,
+        211,
+        235,
+        245,
+        256,
+        266,
+        281,
+        292,
+        312,
+        334,
+        353,
+        368,
+        393,
+        394,
+        417,
+        431,
+        443,
+        484,
+      ];
 
-    // first line
-    expect(lineForPosition(0, lines)).toEqual(1);
-    expect(lineForPosition(1, lines)).toEqual(1);
-    expect(lineForPosition(4, lines)).toEqual(2);
-    expect(lineForPosition(5, lines)).toEqual(2);
-    expect(lineForPosition(51, lines)).toEqual(3);
-    expect(lineForPosition(255, lines)).toEqual(13);
-    expect(lineForPosition(256, lines)).toEqual(14);
-    expect(lineForPosition(257, lines)).toEqual(14);
-    expect(lineForPosition(417, lines)).toEqual(24);
-    expect(lineForPosition(418, lines)).toEqual(24);
-    expect(lineForPosition(483, lines)).toEqual(26);
-    expect(lineForPosition(484, lines)).toEqual(27);
-    expect(lineForPosition(599, lines)).toEqual(27);
+      // first line
+      expect(lineForPosition(0, lines)).toEqual(0);
+      expect(lineForPosition(1, lines)).toEqual(0);
+      expect(lineForPosition(4, lines)).toEqual(0);
+      expect(lineForPosition(5, lines)).toEqual(1);
+      expect(lineForPosition(51, lines)).toEqual(2);
+      expect(lineForPosition(255, lines)).toEqual(12);
+      expect(lineForPosition(256, lines)).toEqual(13);
+      expect(lineForPosition(257, lines)).toEqual(13);
+      expect(lineForPosition(417, lines)).toEqual(23);
+      expect(lineForPosition(418, lines)).toEqual(23);
+      expect(lineForPosition(483, lines)).toEqual(25);
+      expect(lineForPosition(484, lines)).toEqual(26);
+      expect(lineForPosition(599, lines)).toEqual(26);
+    });
   });
 
   describe('getLocationForJsonPath', () => {
@@ -102,9 +107,9 @@ describe('yaml parser', () => {
       const { getLocationForJsonPath } = parseWithPointers(petStore);
 
       test.each`
-        start      | end        | path
-        ${[10, 11]} | ${[10, 29]}  | ${['info', 'contact', 'email']}
-        ${[29, 0]} | ${[31, 9]}  | ${['schemes']}
+        start       | end         | path
+        ${[10, 11]} | ${[10, 29]} | ${['info', 'contact', 'email']}
+        ${[30, 2]}  | ${[31, 9]}  | ${['schemes']}
       `('should return proper location for given JSONPath $path', ({ start, end, path }) => {
         expect(getLocationForJsonPath(path)).toEqual({
           range: {
@@ -121,59 +126,57 @@ describe('yaml parser', () => {
       });
     });
 
-  });
+    describe('simple fixture', () => {
+      const { getLocationForJsonPath } = parseWithPointers(simple);
 
-  describe('simple fixture', () => {
-    const fixture = `hello: world
-address:
-  street: 123`;
-
-    test('parses the fixture', () => {
-      expect(parseWithPointers(fixture).data).toMatchSnapshot();
-    });
-
-    test('getJsonPathForPosition', () => {
-      const { getJsonPathForPosition } =
-        parseWithPointers(`hello: world
-address:
-  street: 123`);
-
-      expect(getJsonPathForPosition({
-        character: 4,
-        line: 2,
-      })).toEqual(['address', 'street']);
-      expect(getJsonPathForPosition({
-        character: 3,
-        line: 1,
-      })).toEqual(['address']);
-      expect(getJsonPathForPosition({
-        character: 4,
-        line: 0,
-      })).toEqual(['hello']);
-    });
-
-    test('getLocationForJsonPath', () => {
-      const { getLocationForJsonPath } =
-        parseWithPointers(`hello: world
-address:
-  street: 123`);
-
-      expect(getLocationForJsonPath(['address'])).toEqual({
-        uri: '',
-        range: {
-          start: {
-            line: 1,
-            character: 0,
+      test.each`
+        start      | end        | path
+        ${[0, 7]}  | ${[0, 12]} | ${['hello']}
+        ${[2, 2]}  | ${[2, 13]} | ${['address']}
+        ${[2, 10]} | ${[2, 13]} | ${['address', 'street']}
+      `('should return proper location for given JSONPath $path', ({ start, end, path }) => {
+        expect(getLocationForJsonPath(path)).toEqual({
+          range: {
+            start: {
+              character: start[1],
+              line: start[0],
+            },
+            end: {
+              character: end[1],
+              line: end[0],
+            },
           },
-          end: {
-            line: 2,
-            character: 13,
-          }
-        }
+        });
       });
     });
   });
 
+  describe('simple fixture', () => {
+    test('getJsonPathForPosition', () => {
+      const { getJsonPathForPosition } = parseWithPointers(`hello: world
+address:
+  street: 123`);
+
+      expect(
+        getJsonPathForPosition({
+          character: 4,
+          line: 2,
+        })
+      ).toEqual(['address', 'street']);
+      expect(
+        getJsonPathForPosition({
+          character: 3,
+          line: 1,
+        })
+      ).toEqual(['address']);
+      expect(
+        getJsonPathForPosition({
+          character: 4,
+          line: 0,
+        })
+      ).toEqual(['hello']);
+    });
+  });
 
   test('parse diverse', () => {
     const result = parseWithPointers(diverse);
@@ -190,21 +193,39 @@ address:
       `prop1: true
 prop2: true
   inner 1
-  val: 2`,
+  val: 2`
     );
 
     expect(result.diagnostics).toEqual([
       {
-        level: 60,
-        location: { start: { line: 3 } },
-        msg: 'bad indentation of a mapping entry',
-        ruleId: 'YAMLException',
+        severity: DiagnosticSeverity.Error,
+        message: 'bad indentation of a mapping entry',
+        code: 'YAMLException',
+        range: {
+          start: {
+            character: 5,
+            line: 2,
+          },
+          end: {
+            character: 5,
+            line: 2,
+          },
+        },
       },
       {
-        level: 60,
-        location: { start: { line: 3 } },
-        msg: 'incomplete explicit mapping pair; a key node is missed',
-        ruleId: 'YAMLException',
+        severity: DiagnosticSeverity.Error,
+        message: 'incomplete explicit mapping pair; a key node is missed',
+        code: 'YAMLException',
+        range: {
+          start: {
+            character: 7,
+            line: 2,
+          },
+          end: {
+            character: 7,
+            line: 2,
+          },
+        },
       },
     ]);
   });

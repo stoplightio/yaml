@@ -33,7 +33,7 @@ export const parseWithPointers = <T>(value: string): IParserResult<T> => {
   walk<T>(parsed.data, ast.mappings, lineMap);
 
   if (ast.errors) {
-    parsed.diagnostics = transformErrors(ast.errors);
+    parsed.diagnostics = transformErrors(ast.errors, lineMap);
   }
 
   return parsed;
@@ -157,7 +157,7 @@ const getLoc = (lineMap: number[], { start = 0, end = 0 }): ILocation => {
   };
 };
 
-const transformErrors = (errors: YAMLException[]): any[] => {
+const transformErrors = (errors: YAMLException[], lineMap: number[]): IDiagnostic[] => {
   const validations: IDiagnostic[] = [];
   for (const error of errors) {
     const validation: IDiagnostic = {
@@ -166,12 +166,12 @@ const transformErrors = (errors: YAMLException[]): any[] => {
       severity: error.isWarning ? DiagnosticSeverity.Warning : DiagnosticSeverity.Error,
       range: {
         start: {
-          line: error.mark.line,
+          line: error.mark.line - 1,
           character: error.mark.column,
         },
         end: {
-          line: error.mark.line,
-          character: error.mark.position, // todo: shall we consume toLineEnd?
+          line: error.mark.line - 1,
+          character: error.mark.toLineEnd ? lineMap[error.mark.line - 1] : error.mark.column,
         },
       },
     };

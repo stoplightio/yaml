@@ -33,11 +33,18 @@ describe('getJsonPathForPosition', () => {
       ${0}  | ${0}      | ${['swagger']}
       ${1}  | ${0}      | ${['info']}
       ${1}  | ${3}      | ${['info']}
+      ${2}  | ${0}      | ${['info', 'title']}
       ${2}  | ${3}      | ${['info', 'title']}
       ${2}  | ${5}      | ${['info', 'title']}
       ${3}  | ${7}      | ${['info', 'version']}
-      ${30} | ${7}      | ${['schemes']}
-      ${31} | ${5}      | ${['schemes']}
+      ${18} | ${25}     | ${['tags', 0, 'description']}
+      ${30} | ${7}      | ${['schemes', 0]}
+      ${31} | ${5}      | ${['schemes', 1]}
+      ${40} | ${0}      | ${['paths', '/pets', 'post', 'consumes']}
+      ${40} | ${3}      | ${['paths', '/pets', 'post', 'consumes']}
+      ${41} | ${3}      | ${['paths', '/pets', 'post', 'consumes', 0]}
+      ${42} | ${0}      | ${['paths', '/pets', 'post', 'consumes', 1]}
+      ${42} | ${323}    | ${['paths', '/pets', 'post', 'consumes', 1]}
       ${62} | ${10}     | ${['paths', '/pets', 'get', 'responses', '200']}
     `('should return proper json path for line $line and character $character', ({ line, character, path }) => {
       expect(getJsonPathForPosition(result, { line, character })).toEqual(path);

@@ -6,9 +6,30 @@ export const getLocationForJsonPath: GetLocationForJsonPath<YAMLNode, number[]> 
   const node = findNodeAtPath(ast, path);
   if (node === undefined) return;
 
-  const { startPosition, endPosition } = node;
-  return getLoc(lineMap, { start: startPosition, end: endPosition });
+  const { startPosition } = node;
+  return getLoc(lineMap, { start: startPosition, end: getEndPosition(node) });
 };
+
+function getEndPosition(node: YAMLNode): number {
+  switch (node.kind) {
+    case Kind.SEQ:
+      return getEndPosition((node as YAMLSequence).items[(node as YAMLSequence).items.length - 1]);
+    case Kind.MAPPING:
+      if (node.value === null) {
+        return node.endPosition;
+      }
+
+      return getEndPosition(node.value);
+    case Kind.MAP:
+      if (node.value === null) {
+        return node.endPosition;
+      }
+
+      return getEndPosition(node.mappings[node.mappings.length - 1]);
+  }
+
+  return node.endPosition;
+}
 
 function findNodeAtPath(node: YAMLNode, path: JsonPath) {
   pathLoop: for (const segment of path) {
@@ -38,7 +59,6 @@ function findNodeAtPath(node: YAMLNode, path: JsonPath) {
 const getLoc = (lineMap: number[], { start = 0, end = 0 }): ILocation => {
   const startLine = lineForPosition(start, lineMap);
   const endLine = lineForPosition(end, lineMap);
-  console.log(start, end);
   return {
     range: {
       start: {

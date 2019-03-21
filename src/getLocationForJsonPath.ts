@@ -14,23 +14,21 @@ function getEndPosition(node: YAMLNode): YAMLNode {
   switch (node.kind) {
     case Kind.SEQ:
       const { items } = node as YAMLSequence;
-      if (items.length === 0) {
-        return node;
+      if (items.length !== 0) {
+        return getEndPosition(items[items.length - 1]);
       }
-
-      return getEndPosition(items[items.length - 1]);
+      break;
     case Kind.MAPPING:
-      if (node.value === null) {
-        return node;
+      if (node.value !== null) {
+        return getEndPosition(node.value);
       }
 
-      return getEndPosition(node.value);
+      break;
     case Kind.MAP:
-      if (node.value === null || node.mappings.length === 0) {
-        return node;
+      if (node.value !== null && node.mappings.length !== 0) {
+        return getEndPosition(node.mappings[node.mappings.length - 1]);
       }
-
-      return getEndPosition(node.mappings[node.mappings.length - 1]);
+      break;
   }
 
   return node;

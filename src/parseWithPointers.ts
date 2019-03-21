@@ -67,13 +67,12 @@ const walk = <T>(container: T, nodes: YAMLNode[], lineMap: number[]) => {
 
 // builds up the line map, for use by linesForPosition
 const computeLineMap = (input: string) => {
-  // fixme: support CRLF and CR
   const lines = input.split(/\n/);
   const lineMap: number[] = [];
 
   let sum = 0;
   for (const line of lines) {
-    sum += line.length + 1; // todo: verify how combining marks and such are treated by yaml parser
+    sum += line.length + 1;
     lineMap.push(sum);
   }
 

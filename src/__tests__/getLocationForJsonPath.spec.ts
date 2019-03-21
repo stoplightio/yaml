@@ -14,12 +14,15 @@ describe('getLocationForJsonPath', () => {
 
     test.each`
       start       | end          | path
+      ${[10, 4]}  | ${[10, 29]}  | ${['info', 'contact']}
       ${[10, 11]} | ${[10, 29]}  | ${['info', 'contact', 'email']}
+      ${[10, 4]}  | ${[10, 29]}  | ${['info', 'contact', 'dasdas']}
       ${[30, 2]}  | ${[31, 8]}   | ${['schemes']}
       ${[33, 2]}  | ${[104, 23]} | ${['paths']}
       ${[41, 8]}  | ${[42, 25]}  | ${['paths', '/pets', 'post', 'consumes']}
       ${[41, 10]} | ${[41, 26]}  | ${['paths', '/pets', 'post', 'consumes', 0]}
       ${[41, 10]} | ${[41, 26]}  | ${['paths', '/pets', 'post', 'consumes', '0']}
+      ${[61, 6]}  | ${[71, 60]}  | ${['paths', '/pets', 'get']}
       ${[63, 10]} | ${[66, 26]}  | ${['paths', '/pets', 'get', 'responses', '200']}
     `('should return proper location for given JSONPath $path', ({ start, end, path }) => {
       expect(getLocationForJsonPath(result, path)).toEqual({

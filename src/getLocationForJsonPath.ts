@@ -36,7 +36,7 @@ function getEndPosition(node: YAMLNode): YAMLNode {
 
 function findNodeAtPath(node: YAMLNode, path: JsonPath) {
   pathLoop: for (const segment of path) {
-    switch (node.kind) {
+    switch (node && node.kind) {
       case Kind.MAP:
         for (const item of node.mappings) {
           if (item.key.value === segment) {

@@ -14,16 +14,16 @@ describe('getLocationForJsonPath', () => {
 
     test.each`
       start       | end          | path
-      ${[10, 4]}  | ${[10, 29]}  | ${['info', 'contact']}
+      ${[9, 10]}  | ${[10, 29]}  | ${['info', 'contact']}
       ${[10, 11]} | ${[10, 29]}  | ${['info', 'contact', 'email']}
-      ${[10, 4]}  | ${[10, 29]}  | ${['info', 'contact', 'dasdas']}
-      ${[30, 2]}  | ${[31, 8]}   | ${['schemes']}
-      ${[33, 2]}  | ${[104, 23]} | ${['paths']}
-      ${[41, 8]}  | ${[42, 25]}  | ${['paths', '/pets', 'post', 'consumes']}
+      ${[9, 10]}  | ${[10, 29]}  | ${['info', 'contact', 'dasdas']}
+      ${[29, 8]}  | ${[31, 8]}   | ${['schemes']}
+      ${[32, 6]}  | ${[104, 23]} | ${['paths']}
+      ${[40, 15]} | ${[42, 25]}  | ${['paths', '/pets', 'post', 'consumes']}
       ${[41, 10]} | ${[41, 26]}  | ${['paths', '/pets', 'post', 'consumes', 0]}
       ${[41, 10]} | ${[41, 26]}  | ${['paths', '/pets', 'post', 'consumes', '0']}
-      ${[61, 6]}  | ${[71, 60]}  | ${['paths', '/pets', 'get']}
-      ${[63, 10]} | ${[66, 26]}  | ${['paths', '/pets', 'get', 'responses', '200']}
+      ${[60, 8]}  | ${[71, 60]}  | ${['paths', '/pets', 'get']}
+      ${[62, 14]} | ${[66, 26]}  | ${['paths', '/pets', 'get', 'responses', '200']}
     `('should return proper location for given JSONPath $path', ({ start, end, path }) => {
       expect(getLocationForJsonPath(result, path)).toEqual({
         range: {
@@ -46,7 +46,7 @@ describe('getLocationForJsonPath', () => {
     test.each`
       start      | end        | path
       ${[0, 7]}  | ${[0, 12]} | ${['hello']}
-      ${[2, 2]}  | ${[2, 13]} | ${['address']}
+      ${[1, 8]}  | ${[2, 13]} | ${['address']}
       ${[2, 10]} | ${[2, 13]} | ${['address', 'street']}
     `('should return proper location for given JSONPath $path', ({ start, end, path }) => {
       expect(getLocationForJsonPath(result, path)).toEqual({

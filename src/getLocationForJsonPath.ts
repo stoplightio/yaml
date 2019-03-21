@@ -1,5 +1,5 @@
 import { GetLocationForJsonPath, ILocation, JsonPath } from '@stoplight/types';
-import { YAMLNode } from 'yaml-ast-parser';
+import { Kind, YAMLNode, YAMLSequence } from 'yaml-ast-parser';
 import { lineForPosition } from './lineForPosition';
 
 export const getLocationForJsonPath: GetLocationForJsonPath<YAMLNode, number[]> = ({ ast, lineMap }, path) => {
@@ -12,18 +12,24 @@ export const getLocationForJsonPath: GetLocationForJsonPath<YAMLNode, number[]> 
 
 function findNodeAtPath(node: YAMLNode, path: JsonPath) {
   pathLoop: for (const segment of path) {
-    if (Array.isArray(node.mappings)) {
-      for (const item of node.mappings) {
-        if (item.key.value === segment) {
-          node = item.value;
-          continue pathLoop;
+    switch (node.kind) {
+      case Kind.MAP:
+        for (const item of node.mappings) {
+          if (item.key.value === segment) {
+            node = item.value;
+            continue pathLoop;
+          }
         }
-      }
-
-      return;
+        break;
+      case Kind.SEQ:
+        for (let i = 0; i < (node as YAMLSequence).items.length; i++) {
+          if (i === segment) {
+            node = (node as YAMLSequence).items[i];
+            continue pathLoop;
+          }
+        }
+        break;
     }
-
-    return node;
   }
 
   return node;
@@ -32,6 +38,7 @@ function findNodeAtPath(node: YAMLNode, path: JsonPath) {
 const getLoc = (lineMap: number[], { start = 0, end = 0 }): ILocation => {
   const startLine = lineForPosition(start, lineMap);
   const endLine = lineForPosition(end, lineMap);
+  console.log(start, end);
   return {
     range: {
       start: {

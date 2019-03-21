@@ -20,6 +20,7 @@ describe('getLocationForJsonPath', () => {
       ${[41, 8]}  | ${[42, 25]}  | ${['paths', '/pets', 'post', 'consumes']}
       ${[41, 10]} | ${[41, 26]}  | ${['paths', '/pets', 'post', 'consumes', 0]}
       ${[41, 10]} | ${[41, 26]}  | ${['paths', '/pets', 'post', 'consumes', '0']}
+      ${[63, 10]} | ${[66, 26]}  | ${['paths', '/pets', 'get', 'responses', '200']}
     `('should return proper location for given JSONPath $path', ({ start, end, path }) => {
       expect(getLocationForJsonPath(result, path)).toEqual({
         range: {

@@ -11,7 +11,7 @@ export const getJsonPathForPosition: GetJsonPathForPosition<YAMLNode, number[]> 
 
   const startOffset = line === 0 ? 0 : lineMap[line - 1];
 
-  const node = findNodeAtOffset(ast, startOffset, lineMap[line]);
+  const node = findClosestScalar(ast, startOffset, lineMap[line]);
   if (!node) return;
   return buildJsonPath(node);
 };
@@ -48,7 +48,7 @@ function* walk(node: YAMLNode): IterableIterator<YAMLNode> {
   }
 }
 
-function findNodeAtOffset(ast: YAMLNode, offset: number, endOffset: number): YAMLNode | void {
+function findClosestScalar(ast: YAMLNode, offset: number, endOffset: number): YAMLNode | void {
   for (const node of walk(ast)) {
     switch (node.kind) {
       case Kind.SCALAR:

@@ -44,7 +44,7 @@ function findNodeAtPath(node: YAMLNode, path: JsonPath) {
         break;
       case Kind.SEQ:
         for (let i = 0; i < (node as YAMLSequence).items.length; i++) {
-          if (i === segment) {
+          if (i === Number(segment)) {
             node = (node as YAMLSequence).items[i];
             continue pathLoop;
           }

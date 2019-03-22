@@ -1,117 +1,47 @@
-import { IParserResult, IParserResultPointers, LogLevel } from '@stoplight/types';
-import { load as loadAST, YAMLException } from 'yaml-ast-parser';
+import { DiagnosticSeverity, IDiagnostic, IParserResult } from '@stoplight/types';
+import { load as loadAST, YAMLException, YAMLNode } from 'yaml-ast-parser';
 
 import get = require('lodash/get');
 
-export interface IYamlParserOpts {
-  // Increase performance by limiting how deep into the object we recurse to generate pointers.
-  maxPointerDepth?: number;
-}
+export const parseWithPointers = <T>(value: string): IParserResult<T, YAMLNode, number[]> => {
+  const lineMap = computeLineMap(value);
+  const ast = loadAST(value);
 
-export const parseWithPointers = <T>(value: string, opts: IYamlParserOpts = {}): IParserResult<T> => {
-  const parsed: IParserResult = {
-    data: {},
-    pointers: {},
-    validations: [],
+  const parsed: IParserResult<T, YAMLNode, number[]> = {
+    ast,
+    lineMap,
+    data: {} as T,
+    diagnostics: [],
   };
 
-  if (!value || !value.trim().length) return parsed;
-
-  const ast = loadAST(value);
   if (!ast) return parsed;
 
-  const lineMap = computeLineMap(value);
-
-  parsed.pointers = {
-    '': getLoc(lineMap, {
-      start: 0,
-      end: ast.endPosition,
-    }),
-  };
-
-  parsed.data = walk([], {}, ast.mappings, parsed.pointers, lineMap, 1, opts);
+  walk<T>(parsed.data, ast.mappings, lineMap);
 
   if (ast.errors) {
-    parsed.validations = transformErrors(ast.errors);
+    parsed.diagnostics = transformErrors(ast.errors, lineMap);
   }
 
   return parsed;
 };
 
-/**
- * A performant way to find the appropriate line for the given position.
- *
- * This is key to making the yaml line mapping performant.
- */
-export const lineForPosition = (pos: number, lines: number[], start: number = 0, end?: number): number => {
-  // position 0 is always line 1
-  if (pos === 0) {
-    return 1;
-  }
-
-  // start with max range, 0 - lines.length
-  if (typeof end === 'undefined') {
-    end = lines.length;
-  }
-
-  // target should be the halfway point between start and end
-  const target = Math.floor((end - start) / 2) + start;
-  if (pos >= lines[target] && !lines[target + 1]) {
-    return target + 1;
-  }
-
-  // if pos is between target and the next line's position, we're good!
-  const nextLinePos = lines[Math.min(target + 1, lines.length)];
-  if (pos >= lines[target] && pos <= nextLinePos) {
-    if (pos === nextLinePos) {
-      return target + 2;
-    }
-
-    return target + 1;
-  }
-
-  // if pos is above the current line position, then we need to go "up"
-  if (pos > lines[target]) {
-    return lineForPosition(pos, lines, target + 1, end);
-  } else {
-    // else we take the bottom half
-    return lineForPosition(pos, lines, start, target - 1);
-  }
-};
-
-const walk = (
-  path: string[],
-  container: any,
-  nodes: any[],
-  pointers: IParserResultPointers,
-  lineMap: number[],
-  depth: number,
-  opts: IYamlParserOpts
-) => {
-  if (opts.maxPointerDepth && opts.maxPointerDepth < depth) return container;
-
+const walk = <T>(container: T, nodes: YAMLNode[], lineMap: number[]) => {
   for (const i in nodes) {
     if (!nodes.hasOwnProperty(i)) continue;
 
     const index = parseInt(i);
     const node = nodes[index];
     const key = node.key ? node.key.value : index;
-    const nodePath = path.concat(key);
-
-    pointers[`/${nodePath.join('/')}`] = getLoc(lineMap, {
-      start: node.startPosition,
-      end: node.endPosition,
-    });
 
     const mappings = get(node, 'mappings', get(node, 'value.mappings'));
     if (mappings) {
-      container[key] = walk(nodePath, {}, mappings, pointers, lineMap, depth + 1, opts);
+      container[key] = walk({}, mappings, lineMap);
       continue;
     }
 
     const items = get(node, 'items', get(node, 'value.items'));
     if (items) {
-      container[key] = walk(nodePath, [], items, pointers, lineMap, depth + 1, opts);
+      container[key] = walk([], items, lineMap);
       continue;
     }
 
@@ -142,36 +72,31 @@ const computeLineMap = (input: string) => {
 
   let sum = 0;
   for (const line of lines) {
-    lineMap.push(sum);
     sum += line.length + 1;
+    lineMap.push(sum);
   }
 
   return lineMap;
 };
 
-const getLoc = (lineMap: number[], { start = 0, end = 0 }) => {
-  return {
-    start: { line: lineForPosition(start, lineMap) },
-    end: { line: lineForPosition(end, lineMap) },
-  };
-};
-
-const transformErrors = (errors: YAMLException[]): any[] => {
-  const validations: any[] = [];
+const transformErrors = (errors: YAMLException[], lineMap: number[]): IDiagnostic[] => {
+  const validations: IDiagnostic[] = [];
   for (const error of errors) {
-    const validation: any = {
-      ruleId: error.name,
-      msg: error.reason,
-      level: error.isWarning ? LogLevel.Warn : LogLevel.Fatal,
-    };
-
-    if (error.mark && error.mark.line) {
-      validation.location = {
+    const validation: IDiagnostic = {
+      code: error.name,
+      message: error.reason,
+      severity: error.isWarning ? DiagnosticSeverity.Warning : DiagnosticSeverity.Error,
+      range: {
         start: {
-          line: error.mark.line,
+          line: error.mark.line - 1,
+          character: error.mark.column,
         },
-      };
-    }
+        end: {
+          line: error.mark.line - 1,
+          character: error.mark.toLineEnd ? lineMap[error.mark.line - 1] : error.mark.column,
+        },
+      },
+    };
 
     validations.push(validation);
   }

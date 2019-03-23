@@ -11,8 +11,9 @@ export const getJsonPathForPosition: GetJsonPathForPosition<YAMLNode, number[]> 
 
   const startOffset = line === 0 ? 0 : lineMap[line - 1];
 
-  const node = findClosestScalar(ast, startOffset, lineMap[line]);
+  const node = findClosestNode(ast, Math.min(lineMap[line] - 1, startOffset + character), lineMap[line - 1] - 1);
   if (!node) return;
+
   return buildJsonPath(node);
 };
 
@@ -20,22 +21,23 @@ function* walk(node: YAMLNode): IterableIterator<YAMLNode> {
   switch (node.kind) {
     case Kind.MAP:
       for (const mapping of (node as YamlMap).mappings) {
+        yield mapping;
         yield* walk(mapping);
       }
-
       break;
     case Kind.MAPPING:
       yield node.key;
       if (node.value !== null) {
+        yield node.value;
+
         if (node.value.kind === Kind.MAP || node.value.kind === Kind.SEQ) {
           yield* walk(node.value);
-        } else {
-          yield node.value;
         }
       }
       break;
     case Kind.SEQ:
       for (const item of (node as YAMLSequence).items) {
+        yield item;
         yield* walk(item);
       }
       break;
@@ -48,15 +50,53 @@ function* walk(node: YAMLNode): IterableIterator<YAMLNode> {
   }
 }
 
-function findClosestScalar(ast: YAMLNode, offset: number, endOffset: number): YAMLNode | void {
-  for (const node of walk(ast)) {
-    switch (node.kind) {
-      case Kind.SCALAR:
-        if (offset <= node.startPosition && endOffset >= node.endPosition) {
-          return node;
+function getFirstScalarChild(node: YAMLNode, offset: number): YAMLNode {
+  switch (node.kind) {
+    case Kind.MAPPING:
+      return node.key;
+    case Kind.MAP:
+      if (node.value !== null && node.mappings.length !== 0) {
+        for (const mapping of node.mappings) {
+          if (mapping.startPosition >= offset) {
+            return getFirstScalarChild(mapping, offset);
+          }
         }
+      }
+
+      break;
+    case Kind.SEQ:
+      if ((node as YAMLSequence).items.length !== 0) {
+        for (const item of (node as YAMLSequence).items) {
+          if (item.startPosition >= offset) {
+            return item;
+          }
+        }
+      }
+
+      break;
+  }
+
+  return node;
+}
+
+function findClosestNode(container: YAMLNode, offset: number, lineEndOffset: number): YAMLNode | void {
+  for (const node of walk(container)) {
+    if (node.startPosition <= offset && offset <= node.endPosition) {
+      return node.kind === Kind.SCALAR ? node : findClosestNode(node, offset, lineEndOffset);
     }
   }
+
+  if (container.startPosition <= lineEndOffset && offset <= container.endPosition) {
+    if (container.kind !== Kind.MAPPING) {
+      return getFirstScalarChild(container, lineEndOffset);
+    }
+
+    if (container.value && container.key.endPosition < offset) {
+      return getFirstScalarChild(container.value, lineEndOffset);
+    }
+  }
+
+  return container;
 }
 
 function buildJsonPath(node: YAMLNode) {
@@ -71,7 +111,11 @@ function buildJsonPath(node: YAMLNode) {
         break;
       case Kind.MAPPING:
         if (prevNode !== node.key) {
-          path.unshift(node.key.value);
+          if (path.length > 0 && node.value !== null && node.value.value === path[0]) {
+            path[0] = node.key.value;
+          } else {
+            path.unshift(node.key.value);
+          }
         }
         break;
       case Kind.SEQ:

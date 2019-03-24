@@ -17,35 +17,51 @@ export const getJsonPathForPosition: GetJsonPathForPosition<YAMLNode, number[]> 
   return buildJsonPath(node);
 };
 
+const isValidNode = (node: YAMLNode) => node !== null && node !== undefined;
+
 function* walk(node: YAMLNode): IterableIterator<YAMLNode> {
   switch (node.kind) {
     case Kind.MAP:
-      for (const mapping of (node as YamlMap).mappings) {
-        yield mapping;
-        yield* walk(mapping);
+      if (node.mappings.length !== 0) {
+        for (const mapping of (node as YamlMap).mappings) {
+          if (isValidNode(mapping)) {
+            yield mapping;
+            yield* walk(mapping);
+          }
+        }
       }
+
       break;
     case Kind.MAPPING:
-      yield node.key;
-      if (node.value !== null) {
+      if (isValidNode(node.key)) {
+        yield node.key;
+      }
+
+      if (isValidNode(node.value)) {
         yield node.value;
 
         if (node.value.kind === Kind.MAP || node.value.kind === Kind.SEQ) {
           yield* walk(node.value);
         }
       }
+
       break;
     case Kind.SEQ:
-      for (const item of (node as YAMLSequence).items) {
-        yield item;
-        yield* walk(item);
+      if ((node as YAMLSequence).items.length !== 0) {
+        for (const item of (node as YAMLSequence).items) {
+          if (isValidNode(item)) {
+            yield item;
+            yield* walk(item);
+          }
+        }
       }
+
       break;
     case Kind.SCALAR:
       yield node;
       break;
     case Kind.ANCHOR_REF:
-      // todo: shall we handle it? might be good to iterate over value if Map or so
+      // todo: shall we handle it?
       break;
   }
 }
@@ -55,7 +71,7 @@ function getFirstScalarChild(node: YAMLNode, offset: number): YAMLNode {
     case Kind.MAPPING:
       return node.key;
     case Kind.MAP:
-      if (node.value !== null && node.mappings.length !== 0) {
+      if (node.mappings.length !== 0) {
         for (const mapping of node.mappings) {
           if (mapping.startPosition >= offset) {
             return getFirstScalarChild(mapping, offset);
@@ -111,7 +127,7 @@ function buildJsonPath(node: YAMLNode) {
         break;
       case Kind.MAPPING:
         if (prevNode !== node.key) {
-          if (path.length > 0 && node.value !== null && node.value.value === path[0]) {
+          if (path.length > 0 && isValidNode(node.value) && node.value.value === path[0]) {
             path[0] = node.key.value;
           } else {
             path.unshift(node.key.value);
@@ -123,7 +139,8 @@ function buildJsonPath(node: YAMLNode) {
           const index = (node as YAMLSequence).items.indexOf(prevNode);
           if (prevNode.kind === Kind.SCALAR) {
             path[0] = index;
-          } else {
+            // always better point to parent rather than nothing
+          } else if (index !== -1) {
             path.unshift(index);
           }
         }

@@ -4,17 +4,10 @@ import { getJsonPathForPosition } from '../getJsonPathForPosition';
 import { parseWithPointers } from '../parseWithPointers';
 
 const petStore = fs.readFileSync(join(__dirname, './fixtures/petstore.oas2.yaml'), 'utf-8');
+const demo = fs.readFileSync(join(__dirname, './fixtures/demo.yaml'), 'utf-8');
 const simple = `hello: world
 address:
   street: 123`;
-
-const inline = `map:
-  # Unordered set of key: value pairs.
-  Block style: !!map
-    Clark : Evans
-    Ingy  : döt Net
-    Oren  : Ben-Kiki
-  Flow style: !!map { Clark: Evans, Ingy: döt Net, Oren: Ben-Kiki }`;
 
 describe('getJsonPathForPosition', () => {
   describe('simple fixture', () => {
@@ -34,20 +27,48 @@ describe('getJsonPathForPosition', () => {
     });
   });
 
-  describe('inline fixture', () => {
-    const result = parseWithPointers(inline);
+  describe('demo fixture', () => {
+    const result = parseWithPointers(demo);
 
     test.each`
-      line | character | path
-      ${1} | ${0}      | ${['map', 'Block style']}
-      ${6} | ${0}      | ${['map', 'Flow style']}
-      ${6} | ${4}      | ${['map', 'Flow style']}
-      ${6} | ${25}     | ${['map', 'Flow style', 'Clark']}
-      ${6} | ${34}     | ${['map', 'Flow style', 'Clark']}
-      ${6} | ${38}     | ${['map', 'Flow style', 'Ingy']}
-      ${6} | ${51}     | ${['map', 'Flow style', 'Oren']}
-      ${6} | ${52}     | ${['map', 'Flow style', 'Oren']}
-      ${6} | ${57}     | ${['map', 'Flow style', 'Oren']}
+      line   | character | path
+      ${8}   | ${0}      | ${['map', 'Block style']}
+      ${8}   | ${19}     | ${['map', 'Block style']}
+      ${12}  | ${0}      | ${['map', 'Flow style']}
+      ${12}  | ${4}      | ${['map', 'Flow style']}
+      ${12}  | ${25}     | ${['map', 'Flow style', 'Clark']}
+      ${12}  | ${34}     | ${['map', 'Flow style', 'Clark']}
+      ${12}  | ${38}     | ${['map', 'Flow style', 'Ingy']}
+      ${12}  | ${51}     | ${['map', 'Flow style', 'Oren']}
+      ${12}  | ${52}     | ${['map', 'Flow style', 'Oren']}
+      ${12}  | ${57}     | ${['map', 'Flow style', 'Oren']}
+      ${43}  | ${0}      | ${['set', 'baseball players', 'Mark McGwire']}
+      ${46}  | ${10}     | ${['set', 'baseball teams']}
+      ${46}  | ${36}     | ${['set', 'baseball teams', 'Boston Red Sox']}
+      ${46}  | ${42}     | ${['set', 'baseball teams', 'Detroit Tigers']}
+      ${46}  | ${70}     | ${['set', 'baseball teams', 'New York Yankees']}
+      ${46}  | ${77}     | ${['set', 'baseball teams']}
+      ${50}  | ${0}      | ${['seq']}
+      ${50}  | ${4}      | ${['seq']}
+      ${55}  | ${0}      | ${['seq', 'Block style', 2]}
+      ${55}  | ${12}     | ${['seq', 'Block style', 2]}
+      ${61}  | ${3}      | ${['seq', 'Block style', 8]}
+      ${61}  | ${40}     | ${['seq', 'Block style', 8]}
+      ${62}  | ${3}      | ${['seq', 'Flow style']}
+      ${62}  | ${28}     | ${['seq', 'Flow style', 0]}
+      ${62}  | ${49}     | ${['seq', 'Flow style', 3]}
+      ${62}  | ${64}     | ${['seq', 'Flow style']}
+      ${63}  | ${29}     | ${['seq', 'Flow style', 4]}
+      ${63}  | ${31}     | ${['seq', 'Flow style', 5]}
+      ${63}  | ${42}     | ${['seq', 'Flow style', 6]}
+      ${63}  | ${50}     | ${['seq', 'Flow style', 7]}
+      ${64}  | ${29}     | ${['seq', 'Flow style']}
+      ${64}  | ${35}     | ${['seq', 'Flow style']}
+      ${66}  | ${0}      | ${[]}
+      ${138} | ${0}      | ${['null', '~']}
+      ${202} | ${12}     | ${['foobar']}
+      ${204} | ${7}      | ${['foobar', 1]}
+      ${228} | ${13}     | ${['cities', 'asia', 2]}
     `('should return proper json path for line $line and character $character', ({ line, character, path }) => {
       expect(getJsonPathForPosition(result, { line, character })).toEqual(path);
     });

@@ -146,7 +146,7 @@ function buildJsonPath(node: YAMLNode) {
           const index = (node as YAMLSequence).items.indexOf(prevNode);
           if (prevNode.kind === Kind.SCALAR) {
             path[0] = index;
-            // always better point to parent rather than nothing
+            // always better to point to parent node rather than nothing
           } else if (index !== -1) {
             path.unshift(index);
           }

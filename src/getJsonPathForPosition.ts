@@ -1,5 +1,5 @@
 import { GetJsonPathForPosition, JsonPath } from '@stoplight/types';
-import { Kind, YamlMap, YAMLNode, YAMLSequence } from 'yaml-ast-parser';
+import { Kind, YamlMap, YAMLMapping, YAMLNode, YAMLScalar, YAMLSequence } from 'yaml-ast-parser';
 
 export const getJsonPathForPosition: GetJsonPathForPosition<YAMLNode, number[]> = (
   { ast, lineMap },
@@ -24,7 +24,7 @@ const isValidNode = (node: YAMLNode) => node !== null && node !== undefined;
 function* walk(node: YAMLNode): IterableIterator<YAMLNode> {
   switch (node.kind) {
     case Kind.MAP:
-      if (node.mappings.length !== 0) {
+      if ((node as YamlMap).mappings.length !== 0) {
         for (const mapping of (node as YamlMap).mappings) {
           if (isValidNode(mapping)) {
             yield mapping;
@@ -35,14 +35,14 @@ function* walk(node: YAMLNode): IterableIterator<YAMLNode> {
 
       break;
     case Kind.MAPPING:
-      if (isValidNode(node.key)) {
-        yield node.key;
+      if (isValidNode((node as YAMLMapping).key)) {
+        yield (node as YAMLMapping).key;
       }
 
-      if (isValidNode(node.value)) {
-        yield node.value;
+      if (isValidNode((node as YAMLMapping).value)) {
+        yield (node as YAMLMapping).value;
 
-        if (node.value.kind === Kind.MAP || node.value.kind === Kind.SEQ) {
+        if ((node as YAMLMapping).value.kind === Kind.MAP || (node as YAMLMapping).value.kind === Kind.SEQ) {
           yield* walk(node.value);
         }
       }
@@ -71,7 +71,7 @@ function getFirstScalarChild(node: YAMLNode, line: number, lineMap: number[]): Y
 
   switch (node.kind) {
     case Kind.MAPPING:
-      return node.key;
+      return (node as YAMLMapping).key;
     case Kind.MAP:
       if (node.mappings.length !== 0) {
         for (const mapping of node.mappings) {
@@ -114,8 +114,8 @@ function findClosestScalar(container: YAMLNode, offset: number, line: number, li
       return getFirstScalarChild(container, line, lineMap);
     }
 
-    if (container.value && container.key.endPosition < offset) {
-      return getFirstScalarChild(container.value, line, lineMap);
+    if ((container as YAMLMapping).value && (container as YAMLMapping).key.endPosition < offset) {
+      return getFirstScalarChild((container as YAMLMapping).value, line, lineMap);
     }
   }
 
@@ -130,14 +130,18 @@ function buildJsonPath(node: YAMLNode) {
   while (node) {
     switch (node.kind) {
       case Kind.SCALAR:
-        path.unshift(node.value);
+        path.unshift((node as YAMLScalar).value);
         break;
       case Kind.MAPPING:
-        if (prevNode !== node.key) {
-          if (path.length > 0 && isValidNode(node.value) && node.value.value === path[0]) {
-            path[0] = node.key.value;
+        if (prevNode !== (node as YAMLMapping).key) {
+          if (
+            path.length > 0 &&
+            isValidNode((node as YAMLMapping).value) &&
+            (node as YAMLMapping).value.value === path[0]
+          ) {
+            path[0] = (node as YAMLMapping).key.value;
           } else {
-            path.unshift(node.key.value);
+            path.unshift((node as YAMLMapping).key.value);
           }
         }
         break;

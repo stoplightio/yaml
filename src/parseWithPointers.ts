@@ -31,6 +31,8 @@ const walk = <T>(container: T, nodes: YAMLNode[], lineMap: number[]) => {
 
     const index = parseInt(i);
     const node = nodes[index];
+    if (node === null) continue;
+
     const key = node.key ? node.key.value : index;
 
     const mappings = get(node, 'mappings', get(node, 'value.mappings'));

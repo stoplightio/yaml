@@ -9,7 +9,27 @@ const simple = `hello: world
 address:
   street: 123`;
 
+const emptyValues = `host: example.com
+securityDefinitions: {}
+paths: {}
+parameters:
+ skip:
+    in: query
+    type: string
+    name: skip`;
+
 describe('getJsonPathForPosition', () => {
+  describe('emptyValues fixture', () => {
+    const result = parseWithPointers(emptyValues);
+
+    test.each`
+      line | character | path
+      ${2} | ${9}      | ${['paths']}
+    `('should return proper json path for line $line and character $character', ({ line, character, path }) => {
+      expect(getJsonPathForPosition(result, { line, character })).toEqual(path);
+    });
+  });
+
   describe('simple fixture', () => {
     const result = parseWithPointers(simple);
 
@@ -37,17 +57,22 @@ describe('getJsonPathForPosition', () => {
       ${12}  | ${0}      | ${['map', 'Flow style']}
       ${12}  | ${4}      | ${['map', 'Flow style']}
       ${12}  | ${25}     | ${['map', 'Flow style', 'Clark']}
-      ${12}  | ${34}     | ${['map', 'Flow style', 'Clark']}
+      ${12}  | ${33}     | ${['map', 'Flow style', 'Clark']}
       ${12}  | ${38}     | ${['map', 'Flow style', 'Ingy']}
       ${12}  | ${51}     | ${['map', 'Flow style', 'Oren']}
       ${12}  | ${52}     | ${['map', 'Flow style', 'Oren']}
       ${12}  | ${57}     | ${['map', 'Flow style', 'Oren']}
-      ${43}  | ${0}      | ${['set', 'baseball players', 'Mark McGwire']}
+      ${13}  | ${0}      | ${undefined}
+      ${19}  | ${0}      | ${['omap', 'Bestiary', 0, 'aardvark']}
+      ${19}  | ${10}     | ${['omap', 'Bestiary', 0, 'aardvark']}
+      ${19}  | ${32}     | ${['omap', 'Bestiary', 0, 'aardvark']}
+      ${42}  | ${0}      | ${['set', 'baseball players', 'Mark McGwire']}
+      ${43}  | ${0}      | ${['set', 'baseball players', 'Sammy Sosa']}
       ${46}  | ${10}     | ${['set', 'baseball teams']}
       ${46}  | ${36}     | ${['set', 'baseball teams', 'Boston Red Sox']}
       ${46}  | ${42}     | ${['set', 'baseball teams', 'Detroit Tigers']}
       ${46}  | ${70}     | ${['set', 'baseball teams', 'New York Yankees']}
-      ${46}  | ${77}     | ${['set', 'baseball teams']}
+      ${46}  | ${75}     | ${['set', 'baseball teams']}
       ${50}  | ${0}      | ${['seq']}
       ${50}  | ${4}      | ${['seq']}
       ${55}  | ${0}      | ${['seq', 'Block style', 2]}
@@ -56,19 +81,23 @@ describe('getJsonPathForPosition', () => {
       ${61}  | ${40}     | ${['seq', 'Block style', 8]}
       ${62}  | ${3}      | ${['seq', 'Flow style']}
       ${62}  | ${28}     | ${['seq', 'Flow style', 0]}
-      ${62}  | ${49}     | ${['seq', 'Flow style', 3]}
+      ${62}  | ${48}     | ${['seq', 'Flow style', 3]}
+      ${62}  | ${49}     | ${['seq', 'Flow style']}
       ${62}  | ${64}     | ${['seq', 'Flow style']}
       ${63}  | ${29}     | ${['seq', 'Flow style', 4]}
       ${63}  | ${31}     | ${['seq', 'Flow style', 5]}
       ${63}  | ${42}     | ${['seq', 'Flow style', 6]}
       ${63}  | ${50}     | ${['seq', 'Flow style', 7]}
-      ${64}  | ${29}     | ${['seq', 'Flow style']}
-      ${64}  | ${35}     | ${['seq', 'Flow style']}
-      ${66}  | ${0}      | ${[]}
+      ${66}  | ${0}      | ${undefined}
       ${138} | ${0}      | ${['null', '~']}
       ${202} | ${12}     | ${['foobar']}
       ${204} | ${7}      | ${['foobar', 1]}
+      ${216} | ${12}     | ${['austrian-cities', 3]}
+      ${220} | ${0}      | ${['cities', 'europe', 0]}
       ${228} | ${13}     | ${['cities', 'asia', 2]}
+      ${234} | ${0}      | ${['european-cities', 'germany']}
+      ${235} | ${0}      | ${['european-cities']}
+      ${236} | ${0}      | ${['european-cities', 'austria']}
     `('should return proper json path for line $line and character $character', ({ line, character, path }) => {
       expect(getJsonPathForPosition(result, { line, character })).toEqual(path);
     });

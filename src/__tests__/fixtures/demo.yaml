@@ -218,8 +218,8 @@ austrian-cities: &austrian-cities
 
 cities:
   europe:
-    <<: *german-cities
-    <<: *austrian-cities
+    - *german-cities
+    - *austrian-cities
     - Rome
     - Paris
     - London
@@ -230,3 +230,8 @@ cities:
     - Shanghai
     - Shenzen
     - Macau
+
+european-cities:
+  germany: *german-cities
+
+  austria: *austrian-cities

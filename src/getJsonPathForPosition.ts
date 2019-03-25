@@ -9,12 +9,14 @@ export const getJsonPathForPosition: GetJsonPathForPosition<YAMLNode, number[]> 
     return;
   }
 
-  const startOffset = line === 0 ? 0 : lineMap[line - 1];
+  const startOffset = line === 0 ? 0 : lineMap[line - 1] + 1;
 
-  const node = findClosestNode(ast, Math.min(lineMap[line] - 1, startOffset + character), lineMap[line - 1] - 1);
+  const node = findClosestScalar(ast, Math.min(lineMap[line] - 1, startOffset + character), line, lineMap);
   if (!node) return;
 
-  return buildJsonPath(node);
+  const path = buildJsonPath(node);
+  if (path.length === 0) return;
+  return path;
 };
 
 const isValidNode = (node: YAMLNode) => node !== null && node !== undefined;
@@ -60,21 +62,21 @@ function* walk(node: YAMLNode): IterableIterator<YAMLNode> {
     case Kind.SCALAR:
       yield node;
       break;
-    case Kind.ANCHOR_REF:
-      // todo: shall we handle it?
-      break;
   }
 }
 
-function getFirstScalarChild(node: YAMLNode, offset: number): YAMLNode {
+function getFirstScalarChild(node: YAMLNode, line: number, lineMap: number[]): YAMLNode {
+  const startOffset = lineMap[line - 1] + 1;
+  const endOffset = lineMap[line];
+
   switch (node.kind) {
     case Kind.MAPPING:
       return node.key;
     case Kind.MAP:
       if (node.mappings.length !== 0) {
         for (const mapping of node.mappings) {
-          if (mapping.startPosition >= offset) {
-            return getFirstScalarChild(mapping, offset);
+          if (mapping.startPosition > startOffset && mapping.startPosition <= endOffset) {
+            return getFirstScalarChild(mapping, line, lineMap);
           }
         }
       }
@@ -83,8 +85,8 @@ function getFirstScalarChild(node: YAMLNode, offset: number): YAMLNode {
     case Kind.SEQ:
       if ((node as YAMLSequence).items.length !== 0) {
         for (const item of (node as YAMLSequence).items) {
-          if (item.startPosition >= offset) {
-            return item;
+          if (item.startPosition > startOffset && item.startPosition <= endOffset) {
+            return getFirstScalarChild(item, line, lineMap);
           }
         }
       }
@@ -95,20 +97,25 @@ function getFirstScalarChild(node: YAMLNode, offset: number): YAMLNode {
   return node;
 }
 
-function findClosestNode(container: YAMLNode, offset: number, lineEndOffset: number): YAMLNode | void {
+function findClosestScalar(container: YAMLNode, offset: number, line: number, lineMap: number[]): YAMLNode | void {
   for (const node of walk(container)) {
     if (node.startPosition <= offset && offset <= node.endPosition) {
-      return node.kind === Kind.SCALAR ? node : findClosestNode(node, offset, lineEndOffset);
+      return node.kind === Kind.SCALAR ? node : findClosestScalar(node, offset, line, lineMap);
     }
   }
+  if (lineMap[line - 1] === lineMap[line] - 1) {
+    // empty line
+    return container;
+  }
 
-  if (container.startPosition <= lineEndOffset && offset <= container.endPosition) {
+  // narrow the lookup, try to find closest node bound to given line
+  if (container.startPosition < lineMap[line - 1] && offset <= container.endPosition) {
     if (container.kind !== Kind.MAPPING) {
-      return getFirstScalarChild(container, lineEndOffset);
+      return getFirstScalarChild(container, line, lineMap);
     }
 
     if (container.value && container.key.endPosition < offset) {
-      return getFirstScalarChild(container.value, lineEndOffset);
+      return getFirstScalarChild(container.value, line, lineMap);
     }
   }
 

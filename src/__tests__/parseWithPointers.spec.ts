@@ -43,45 +43,91 @@ describe('yaml parser', () => {
     expect(result.data).toEqual(HugeJSON);
   });
 
-  test('report errors', () => {
-    const result = parseWithPointers(
-      `prop1: true
+  describe('report errors', () => {
+    test('unknown tags', () => {
+      const result = parseWithPointers(`function: !!js/function >
+  function foobar() {
+    return 'Wow! JS-YAML Rocks!';
+  }
+  
+test: !!css >
+  function boom() {}
+`);
+
+      expect(result).toHaveProperty('diagnostics', [
+        {
+          code: 'YAMLException',
+          message: 'unknown tag <tag:yaml.org,2002:js/function>',
+          range: {
+            end: {
+              character: 25,
+              line: 0,
+            },
+            start: {
+              character: 10,
+              line: 0,
+            },
+          },
+          severity: DiagnosticSeverity.Error,
+        },
+        {
+          code: 'YAMLException',
+          message: 'unknown tag <tag:yaml.org,2002:css>',
+          range: {
+            end: {
+              character: 13,
+              line: 5,
+            },
+            start: {
+              character: 6,
+              line: 5,
+            },
+          },
+          severity: DiagnosticSeverity.Error,
+        },
+      ]);
+    });
+
+    test('invalid mapping', () => {
+      const result = parseWithPointers(
+        `prop1: true
 prop2: true
   inner 1
   val: 2`
-    );
+      );
 
-    expect(result.diagnostics).toEqual([
-      {
-        severity: DiagnosticSeverity.Error,
-        message: 'bad indentation of a mapping entry',
-        code: 'YAMLException',
-        range: {
-          start: {
-            character: 5,
-            line: 2,
-          },
-          end: {
-            character: 5,
-            line: 2,
-          },
-        },
-      },
-      {
-        severity: DiagnosticSeverity.Error,
-        message: 'incomplete explicit mapping pair; a key node is missed',
-        code: 'YAMLException',
-        range: {
-          start: {
-            character: 7,
-            line: 2,
-          },
-          end: {
-            character: 7,
-            line: 2,
+      expect(result.diagnostics).toEqual([
+        {
+          severity: DiagnosticSeverity.Error,
+          message: 'bad indentation of a mapping entry',
+          code: 'YAMLException',
+          range: {
+            start: {
+              character: 5,
+              line: 3,
+            },
+            end: {
+              character: 5,
+              line: 3,
+            },
           },
         },
-      },
-    ]);
+        {
+          severity: DiagnosticSeverity.Error,
+          message: 'incomplete explicit mapping pair; a key node is missed',
+          code: 'YAMLException',
+          range: {
+            start: {
+              character: 7,
+              line: 3,
+            },
+            end: {
+              character: 7,
+              line: 3,
+            },
+          },
+        },
+      ]);
+    });
   });
 });

@@ -81,6 +81,14 @@ const computeLineMap = (input: string) => {
   return lineMap;
 };
 
+function getLineLength(lineMap: number[], line: number) {
+  if (line === 0) {
+    return Math.max(0, lineMap[0] - 1);
+  }
+
+  return Math.max(0, lineMap[line] - lineMap[line - 1] - 1);
+}
+
 const transformErrors = (errors: YAMLException[], lineMap: number[]): IDiagnostic[] => {
   const validations: IDiagnostic[] = [];
   for (const error of errors) {
@@ -90,12 +98,12 @@ const transformErrors = (errors: YAMLException[], lineMap: number[]): IDiagnosti
       severity: error.isWarning ? DiagnosticSeverity.Warning : DiagnosticSeverity.Error,
       range: {
         start: {
-          line: error.mark.line - 1,
+          line: error.mark.line,
           character: error.mark.column,
         },
         end: {
-          line: error.mark.line - 1,
-          character: error.mark.toLineEnd ? lineMap[error.mark.line - 1] : error.mark.column,
+          line: error.mark.line,
+          character: error.mark.toLineEnd ? getLineLength(lineMap, error.mark.line) : error.mark.column,
         },
       },
     };

@@ -18,7 +18,9 @@ yarn add @stoplight/yaml
 
 ### Usage
 
-- **[parseWithPointers](https://stoplightio.github.io/yaml/globals.html#parsewithpointers)**: Parses YAML into JSON and also returns a source map that includes a JSON path pointer for every property in the result (with line information).
+- **[getJsonPathForPosition](https://stoplightio.github.io/yaml/globals.html#getjsonpathforposition)**: Computes JSON path for given position.
+- **[getLocationForJsonPath](https://stoplightio.github.io/yaml/globals.html#getlocationforjsonpath)**: Retrieves location of node matching given JSON path.
+- **[parseWithPointers](https://stoplightio.github.io/yaml/globals.html#parsewithpointers)**: Parses YAML into JSON and also returns diagnostics as well as full ast with line information.
 
 ```ts
 // basic example of parseWithPointers
@@ -27,7 +29,23 @@ import { parseWithPointers } from "@stoplight/yaml";
 const result = parseWithPointers("foo: bar");
 
 console.log(result.data); // => the {foo: "bar"} JS object
-console.log(result.pointers); // => the source map with a single "#/foo" pointer that has position info for the foo property
+```
+
+```ts
+// basic example of getJsonPathForPosition and getLocationForJsonPath
+import { getJsonPathForPosition, getLocationForJsonPath, parseWithPointers } from "@stoplight/yaml";
+
+const result = parseWithPointers(`hello: world
+address:
+    street: 123`
+);
+
+const path = getJsonPathForPosition(result, { line: 2, character: 7 }); // line and character are 0-based
+console.log(path); // -> ["address", "street"];
+
+const position = getLocationForJsonPath(result, ['address']);
+console.log(position.range.start); // { line: 1, character: 8 } line and character are 0-based
+console.log(position.range.end); // { line: 2, character: 15 } line and character are 0-based
 ```
 
 ### Contributing

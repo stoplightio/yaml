@@ -28,7 +28,6 @@ function* walk(node: YAMLNode): IterableIterator<YAMLNode> {
         for (const mapping of (node as YamlMap).mappings) {
           if (isValidNode(mapping)) {
             yield mapping;
-            yield* walk(mapping);
           }
         }
       }
@@ -41,10 +40,6 @@ function* walk(node: YAMLNode): IterableIterator<YAMLNode> {
 
       if (isValidNode((node as YAMLMapping).value)) {
         yield (node as YAMLMapping).value;
-
-        if ((node as YAMLMapping).value.kind === Kind.MAP || (node as YAMLMapping).value.kind === Kind.SEQ) {
-          yield* walk(node.value);
-        }
       }
 
       break;
@@ -53,7 +48,6 @@ function* walk(node: YAMLNode): IterableIterator<YAMLNode> {
         for (const item of (node as YAMLSequence).items) {
           if (isValidNode(item)) {
             yield item;
-            yield* walk(item);
           }
         }
       }

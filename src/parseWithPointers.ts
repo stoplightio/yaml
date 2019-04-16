@@ -1,7 +1,5 @@
 import { DiagnosticSeverity, IDiagnostic, IParserResult } from '@stoplight/types';
-import { load as loadAST, YAMLException, YAMLNode } from 'yaml-ast-parser';
-
-import get = require('lodash/get');
+import { Kind, load as loadAST, YAMLException, YamlMap, YAMLNode, YAMLSequence } from 'yaml-ast-parser';
 
 export const parseWithPointers = <T>(value: string): IParserResult<T, YAMLNode, number[]> => {
   const lineMap = computeLineMap(value);
@@ -16,7 +14,7 @@ export const parseWithPointers = <T>(value: string): IParserResult<T, YAMLNode, 
 
   if (!ast) return parsed;
 
-  walk<T>(parsed.data, ast.mappings, lineMap);
+  parsed.data = walk(ast) as T;
 
   if (ast.errors) {
     parsed.diagnostics = transformErrors(ast.errors, lineMap);
@@ -25,46 +23,31 @@ export const parseWithPointers = <T>(value: string): IParserResult<T, YAMLNode, 
   return parsed;
 };
 
-const walk = <T>(container: T, nodes: YAMLNode[], lineMap: number[]) => {
-  for (const i in nodes) {
-    if (!nodes.hasOwnProperty(i)) continue;
-
-    const index = parseInt(i);
-    const node = nodes[index];
-    if (node === null) continue;
-
-    const key = node.key ? node.key.value : index;
-
-    const mappings = get(node, 'mappings', get(node, 'value.mappings'));
-    if (mappings) {
-      container[key] = walk({}, mappings, lineMap);
-      continue;
-    }
-
-    const items = get(node, 'items', get(node, 'value.items'));
-    if (items) {
-      container[key] = walk([], items, lineMap);
-      continue;
-    }
-
-    if (node) {
-      if (node.hasOwnProperty('valueObject')) {
-        container[key] = node.valueObject;
-      } else if (node.hasOwnProperty('value')) {
-        if (node.value && node.value.hasOwnProperty('valueObject')) {
-          container[key] = node.value.valueObject;
-        } else if (node.value && node.value.hasOwnProperty('value')) {
-          container[key] = node.value.value;
-        } else {
-          container[key] = node.value;
+const walk = (node: YAMLNode | null): unknown => {
+  if (node) {
+    switch (node.kind) {
+      case Kind.MAP: {
+        const container = {};
+        // note, we don't handle null aka '~' keys on purpose
+        for (const mapping of (node as YamlMap).mappings) {
+          // typing is broken, value might be null
+          container[mapping.key.value] = walk(mapping.value);
         }
+
+        return container;
       }
-    } else {
-      container[key] = node;
+      case Kind.SEQ:
+        return (node as YAMLSequence).items.map(item => walk(item));
+      case Kind.SCALAR:
+        return 'valueObject' in node ? node.valueObject : node.value;
+      case Kind.ANCHOR_REF:
+        return;
+      default:
+        return null;
     }
   }
 
-  return container;
+  return node;
 };
 
 // builds up the line map, for use by linesForPosition

@@ -33,6 +33,16 @@ const diverse = `---
       to save space`;
 
 describe('yaml parser', () => {
+  test.each(['test', 1])('parse scalar $s', val => {
+    const result = parseWithPointers(String(val));
+    expect(result.data).toEqual(val);
+  });
+
+  test('parse sequences', () => {
+    const result = parseWithPointers('[0, 1, 2]');
+    expect(result.data).toEqual([0, 1, 2]);
+  });
+
   test('parse diverse', () => {
     const result = parseWithPointers(diverse);
     expect(result).toMatchSnapshot();

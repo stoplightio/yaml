@@ -16,7 +16,7 @@ export const parseWithPointers = <T>(value: string): IParserResult<T, YAMLNode, 
   const parsed: IParserResult<T, YAMLNode, number[]> = {
     ast,
     lineMap,
-    data: {} as T,
+    data: {} as T, // fixme: we most likely should have undefined here, but this might be breaking
     diagnostics: [],
   };
 

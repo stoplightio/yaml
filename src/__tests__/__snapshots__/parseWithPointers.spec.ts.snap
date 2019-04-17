@@ -1,5 +1,76 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`yaml parser dereferencing anchor refs insane edge case 1`] = `
+Array [
+  Array [
+    Array [
+      undefined,
+      Object {
+        "test": Array [
+          undefined,
+        ],
+      },
+      Object {
+        "abc": Object {
+          "a": null,
+          "c": undefined,
+          "foo": 2,
+          "x": undefined,
+        },
+      },
+    ],
+    Object {
+      "test": Array [
+        Array [
+          undefined,
+          Object {
+            "test": Array [
+              undefined,
+            ],
+          },
+          Object {
+            "abc": Object {
+              "a": null,
+              "c": undefined,
+              "foo": 2,
+              "x": undefined,
+            },
+          },
+        ],
+      ],
+    },
+    Object {
+      "abc": Object {
+        "a": null,
+        "c": Array [
+          undefined,
+          Object {
+            "test": Array [
+              undefined,
+            ],
+          },
+          Object {
+            "abc": Object {
+              "a": null,
+              "c": undefined,
+              "foo": 2,
+              "x": undefined,
+            },
+          },
+        ],
+        "foo": 2,
+        "x": Object {
+          "a": null,
+          "c": undefined,
+          "foo": 2,
+          "x": undefined,
+        },
+      },
+    },
+  ],
+]
+`;
+
 exports[`yaml parser parse diverse 1`] = `
 Object {
   "ast": Object {

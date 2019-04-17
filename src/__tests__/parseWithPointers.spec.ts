@@ -141,26 +141,98 @@ prop2: true
     });
   });
 
-  test('dereferences circular anchor refs', () => {
-    const result = parseWithPointers(`definitions:
+  describe('dereferencing anchor refs', () => {
+    test('ignore valid refs', () => {
+      const result = parseWithPointers(`austrian-cities: &austrian-cities
+  - Vienna
+  - Graz
+  - Linz
+  - Salzburg
+  
+european-cities:
+  austria: *austrian-cities
+`);
+      expect(result.data).toEqual({
+        'austrian-cities': ['Vienna', 'Graz', 'Linz', 'Salzburg'],
+        'european-cities': {
+          austria: ['Vienna', 'Graz', 'Linz', 'Salzburg'],
+        },
+      });
+    });
+
+    test('support circular refs in mapping', () => {
+      const result = parseWithPointers(`definitions:
   model: &ref
     foo:
       name: *ref
 `);
-    expect(result.data).toEqual({
-      definitions: {
-        model: {
-          foo: {
-            name: {
-              foo: {
-                name: undefined,
+
+      expect(result.data).toEqual({
+        definitions: {
+          model: {
+            foo: {
+              name: {
+                foo: {
+                  name: undefined,
+                },
               },
             },
           },
         },
-      },
+      });
+
+      expect(() => JSON.stringify(result.data)).not.toThrow();
     });
 
-    expect(() => JSON.stringify(result.data)).not.toThrow();
+    test('support circular in refs sequences', () => {
+      const result = parseWithPointers(`- &foo
+  - test:
+    - *foo
+`);
+      expect(result.data).toEqual([
+        [
+          {
+            test: [[{ test: [undefined] }]],
+          },
+        ],
+      ]);
+
+      expect(() => JSON.stringify(result.data)).not.toThrow();
+    });
+
+    test('support circular nested refs', () => {
+      const result = parseWithPointers(`a: &foo
+  - b: &bar
+    - true
+    - c: *bar
+    - *foo
+`);
+
+      expect(result.data).toEqual({
+        a: [
+          {
+            b: [true, { c: [true, { c: undefined }, undefined] }, [{ b: [true, { c: undefined }, undefined] }]],
+          },
+        ],
+      });
+
+      expect(() => JSON.stringify(result.data)).not.toThrow();
+    });
+
+    test('insane edge case', () => {
+      const result = parseWithPointers(`- &foo
+  - *foo
+  - test:
+    - *foo
+  - abc: &test
+      foo: 2
+      a:
+      c: *foo
+      x: *test
+`);
+      expect(result.data).toMatchSnapshot();
+
+      expect(() => JSON.stringify(result.data)).not.toThrow();
+    });
   });
 });

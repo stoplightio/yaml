@@ -50,7 +50,7 @@ const walk = (node: YAMLNode | null): unknown => {
         return 'valueObject' in node ? node.valueObject : node.value;
       case Kind.ANCHOR_REF:
         if (node.value !== undefined && isCircularAnchorRef(node as YAMLAnchorReference)) {
-          node.value = dereferenceAnchor(node.value, node);
+          node.value = dereferenceAnchor(node.value, (node as YAMLAnchorReference).referencesAnchor);
         }
 
         return walk(node.value);
@@ -75,26 +75,31 @@ const isCircularAnchorRef = (anchorRef: YAMLAnchorReference) => {
   return false;
 };
 
-const dereferenceAnchor = (node: YAMLNode, parent: YAMLNode): YAMLNode | YAMLNode[] | void => {
+const dereferenceAnchor = (node: YAMLNode, anchorId: string): YAMLNode | YAMLNode[] | void => {
   if (!node) return node;
-  if (node === parent) return;
+  if ('referencesAnchor' in node && (node as YAMLAnchorReference).referencesAnchor === anchorId) return;
 
   switch (node.kind) {
     case Kind.MAP:
       return {
         ...node,
-        mappings: (node as YamlMap).mappings.map(mapping => dereferenceAnchor(mapping, parent) as YAMLNode),
+        mappings: (node as YamlMap).mappings.map(mapping => dereferenceAnchor(mapping, anchorId) as YAMLNode),
       } as YamlMap;
     case Kind.SEQ:
       return {
         ...node,
-        items: (node as YAMLSequence).items.map(item => dereferenceAnchor(item, parent) as YAMLNode),
+        items: (node as YAMLSequence).items.map(item => dereferenceAnchor(item, anchorId) as YAMLNode),
       } as YAMLSequence;
     case Kind.MAPPING:
-      return { ...node, value: dereferenceAnchor(node.value, parent) };
+      return { ...node, value: dereferenceAnchor(node.value, anchorId) };
     case Kind.SCALAR:
+      return node;
     case Kind.ANCHOR_REF:
-      return { ...node };
+      if (node.value !== undefined && isCircularAnchorRef(node as YAMLAnchorReference)) {
+        return;
+      }
+
+      return node;
     default:
       return node;
   }

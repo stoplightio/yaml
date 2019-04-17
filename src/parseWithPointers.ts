@@ -1,5 +1,13 @@
 import { DiagnosticSeverity, IDiagnostic, IParserResult } from '@stoplight/types';
-import { Kind, load as loadAST, YAMLException, YamlMap, YAMLNode, YAMLSequence } from 'yaml-ast-parser';
+import {
+  Kind,
+  load as loadAST,
+  YAMLAnchorReference,
+  YAMLException,
+  YamlMap,
+  YAMLNode,
+  YAMLSequence,
+} from 'yaml-ast-parser';
 
 export const parseWithPointers = <T>(value: string): IParserResult<T, YAMLNode, number[]> => {
   const lineMap = computeLineMap(value);
@@ -41,13 +49,55 @@ const walk = (node: YAMLNode | null): unknown => {
       case Kind.SCALAR:
         return 'valueObject' in node ? node.valueObject : node.value;
       case Kind.ANCHOR_REF:
-        return;
+        if (node.value !== undefined && isCircularAnchorRef(node as YAMLAnchorReference)) {
+          node.value = dereferenceAnchor(node.value, node);
+        }
+
+        return walk(node.value);
       default:
         return null;
     }
   }
 
   return node;
+};
+
+const isCircularAnchorRef = (anchorRef: YAMLAnchorReference) => {
+  const { referencesAnchor } = anchorRef;
+  let node: YAMLNode | undefined = anchorRef;
+  // tslint:disable-next-line:no-conditional-assignment
+  while ((node = node.parent)) {
+    if ('anchorId' in node && node.anchorId === referencesAnchor) {
+      return true;
+    }
+  }
+
+  return false;
+};
+
+const dereferenceAnchor = (node: YAMLNode, parent: YAMLNode): YAMLNode | YAMLNode[] | void => {
+  if (!node) return node;
+  if (node === parent) return;
+
+  switch (node.kind) {
+    case Kind.MAP:
+      return {
+        ...node,
+        mappings: (node as YamlMap).mappings.map(mapping => dereferenceAnchor(mapping, parent) as YAMLNode),
+      } as YamlMap;
+    case Kind.SEQ:
+      return {
+        ...node,
+        items: (node as YAMLSequence).items.map(item => dereferenceAnchor(item, parent) as YAMLNode),
+      } as YAMLSequence;
+    case Kind.MAPPING:
+      return { ...node, value: dereferenceAnchor(node.value, parent) };
+    case Kind.SCALAR:
+    case Kind.ANCHOR_REF:
+      return { ...node };
+    default:
+      return node;
+  }
 };
 
 // builds up the line map, for use by linesForPosition

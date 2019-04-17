@@ -140,4 +140,27 @@ prop2: true
       ]);
     });
   });
+
+  test('dereferences circular anchor refs', () => {
+    const result = parseWithPointers(`definitions:
+  model: &ref
+    foo:
+      name: *ref
+`);
+    expect(result.data).toEqual({
+      definitions: {
+        model: {
+          foo: {
+            name: {
+              foo: {
+                name: undefined,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    expect(() => JSON.stringify(result.data)).not.toThrow();
+  });
 });

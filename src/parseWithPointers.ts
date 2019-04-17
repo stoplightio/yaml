@@ -1,7 +1,13 @@
 import { DiagnosticSeverity, IDiagnostic, IParserResult } from '@stoplight/types';
-import { load as loadAST, YAMLException, YAMLNode } from 'yaml-ast-parser';
-
-import get = require('lodash/get');
+import {
+  Kind,
+  load as loadAST,
+  YAMLAnchorReference,
+  YAMLException,
+  YamlMap,
+  YAMLNode,
+  YAMLSequence,
+} from 'yaml-ast-parser';
 
 export const parseWithPointers = <T>(value: string): IParserResult<T, YAMLNode, number[]> => {
   const lineMap = computeLineMap(value);
@@ -10,13 +16,13 @@ export const parseWithPointers = <T>(value: string): IParserResult<T, YAMLNode, 
   const parsed: IParserResult<T, YAMLNode, number[]> = {
     ast,
     lineMap,
-    data: {} as T,
+    data: {} as T, // fixme: we most likely should have undefined here, but this might be breaking
     diagnostics: [],
   };
 
   if (!ast) return parsed;
 
-  walk<T>(parsed.data, ast.mappings, lineMap);
+  parsed.data = walk(ast) as T;
 
   if (ast.errors) {
     parsed.diagnostics = transformErrors(ast.errors, lineMap);
@@ -25,46 +31,78 @@ export const parseWithPointers = <T>(value: string): IParserResult<T, YAMLNode, 
   return parsed;
 };
 
-const walk = <T>(container: T, nodes: YAMLNode[], lineMap: number[]) => {
-  for (const i in nodes) {
-    if (!nodes.hasOwnProperty(i)) continue;
-
-    const index = parseInt(i);
-    const node = nodes[index];
-    if (node === null) continue;
-
-    const key = node.key ? node.key.value : index;
-
-    const mappings = get(node, 'mappings', get(node, 'value.mappings'));
-    if (mappings) {
-      container[key] = walk({}, mappings, lineMap);
-      continue;
-    }
-
-    const items = get(node, 'items', get(node, 'value.items'));
-    if (items) {
-      container[key] = walk([], items, lineMap);
-      continue;
-    }
-
-    if (node) {
-      if (node.hasOwnProperty('valueObject')) {
-        container[key] = node.valueObject;
-      } else if (node.hasOwnProperty('value')) {
-        if (node.value && node.value.hasOwnProperty('valueObject')) {
-          container[key] = node.value.valueObject;
-        } else if (node.value && node.value.hasOwnProperty('value')) {
-          container[key] = node.value.value;
-        } else {
-          container[key] = node.value;
+const walk = (node: YAMLNode | null): unknown => {
+  if (node) {
+    switch (node.kind) {
+      case Kind.MAP: {
+        const container = {};
+        // note, we don't handle null aka '~' keys on purpose
+        for (const mapping of (node as YamlMap).mappings) {
+          // typing is broken, value might be null
+          container[mapping.key.value] = walk(mapping.value);
         }
+
+        return container;
       }
-    } else {
-      container[key] = node;
+      case Kind.SEQ:
+        return (node as YAMLSequence).items.map(item => walk(item));
+      case Kind.SCALAR:
+        return 'valueObject' in node ? node.valueObject : node.value;
+      case Kind.ANCHOR_REF:
+        if (node.value !== undefined && isCircularAnchorRef(node as YAMLAnchorReference)) {
+          node.value = dereferenceAnchor(node.value, (node as YAMLAnchorReference).referencesAnchor);
+        }
+
+        return walk(node.value);
+      default:
+        return null;
     }
   }
 
-  return container;
+  return node;
+};
+
+const isCircularAnchorRef = (anchorRef: YAMLAnchorReference) => {
+  const { referencesAnchor } = anchorRef;
+  let node: YAMLNode | undefined = anchorRef;
+  // tslint:disable-next-line:no-conditional-assignment
+  while ((node = node.parent)) {
+    if ('anchorId' in node && node.anchorId === referencesAnchor) {
+      return true;
+    }
+  }
+
+  return false;
+};
+
+const dereferenceAnchor = (node: YAMLNode, anchorId: string): YAMLNode | YAMLNode[] | void => {
+  if (!node) return node;
+  if ('referencesAnchor' in node && (node as YAMLAnchorReference).referencesAnchor === anchorId) return;
+
+  switch (node.kind) {
+    case Kind.MAP:
+      return {
+        ...node,
+        mappings: (node as YamlMap).mappings.map(mapping => dereferenceAnchor(mapping, anchorId) as YAMLNode),
+      } as YamlMap;
+    case Kind.SEQ:
+      return {
+        ...node,
+        items: (node as YAMLSequence).items.map(item => dereferenceAnchor(item, anchorId) as YAMLNode),
+      } as YAMLSequence;
+    case Kind.MAPPING:
+      return { ...node, value: dereferenceAnchor(node.value, anchorId) };
+    case Kind.SCALAR:
+      return node;
+    case Kind.ANCHOR_REF:
+      if (node.value !== undefined && isCircularAnchorRef(node as YAMLAnchorReference)) {
+        return;
+      }
+
+      return node;
+    default:
+      return node;
+  }
 };
 
 // builds up the line map, for use by linesForPosition

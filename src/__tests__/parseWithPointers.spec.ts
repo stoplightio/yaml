@@ -200,6 +200,31 @@ european-cities:
       expect(() => JSON.stringify(result.data)).not.toThrow();
     });
 
+    test('support mixed refs', () => {
+      const result = parseWithPointers(`austrian-cities: &austrian-cities
+  - Vienna
+  - Graz
+  - Linz
+  - Salzburg
+  
+european-cities: &cities
+    austria: *austrian-cities
+    all: *cities
+`);
+
+      expect(result.data).toEqual({
+        'austrian-cities': ['Vienna', 'Graz', 'Linz', 'Salzburg'],
+        'european-cities': {
+          all: {
+            austria: ['Vienna', 'Graz', 'Linz', 'Salzburg'],
+          },
+          austria: ['Vienna', 'Graz', 'Linz', 'Salzburg'],
+        },
+      });
+
+      expect(() => JSON.stringify(result.data)).not.toThrow();
+    });
+
     test('support circular nested refs', () => {
       const result = parseWithPointers(`a: &foo
   - b: &bar

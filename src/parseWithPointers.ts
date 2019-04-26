@@ -1,4 +1,4 @@
-import { DiagnosticSeverity, IDiagnostic, IParserResult } from '@stoplight/types';
+import { DiagnosticSeverity, IDiagnostic } from '@stoplight/types';
 import {
   Kind,
   load as loadAST,
@@ -8,12 +8,13 @@ import {
   YAMLNode,
   YAMLSequence,
 } from 'yaml-ast-parser';
+import { YamlParserResult } from './types';
 
-export const parseWithPointers = <T>(value: string): IParserResult<T, YAMLNode, number[]> => {
+export const parseWithPointers = <T>(value: string): YamlParserResult<T> => {
   const lineMap = computeLineMap(value);
   const ast = loadAST(value);
 
-  const parsed: IParserResult<T, YAMLNode, number[]> = {
+  const parsed: YamlParserResult<T> = {
     ast,
     lineMap,
     data: {} as T, // fixme: we most likely should have undefined here, but this might be breaking

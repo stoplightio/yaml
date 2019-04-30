@@ -4,6 +4,7 @@ import { getLocationForJsonPath } from '../getLocationForJsonPath';
 import { parseWithPointers } from '../parseWithPointers';
 
 const petStore = fs.readFileSync(join(__dirname, './fixtures/petstore.oas2.yaml'), 'utf-8');
+const spectral170 = fs.readFileSync(join(__dirname, './fixtures/spectral-170.yaml'), 'utf-8');
 const simple = `hello: world
 address:
   street: 123`;
@@ -48,6 +49,28 @@ describe('getLocationForJsonPath', () => {
       ${[0, 7]}  | ${[0, 12]} | ${['hello']}
       ${[1, 8]}  | ${[2, 13]} | ${['address']}
       ${[2, 10]} | ${[2, 13]} | ${['address', 'street']}
+    `('should return proper location for given JSONPath $path', ({ start, end, path }) => {
+      expect(getLocationForJsonPath(result, path)).toEqual({
+        range: {
+          start: {
+            character: start[1],
+            line: start[0],
+          },
+          end: {
+            character: end[1],
+            line: end[0],
+          },
+        },
+      });
+    });
+  });
+
+  describe('spectral bug #170 fixture', () => {
+    const result = parseWithPointers(spectral170);
+
+    test.each`
+      start       | end         | path
+      ${[35, 20]} | ${[35, 20]} | ${['definitions', 'AnotherDefinition', 'properties', 'special', 'description']}
     `('should return proper location for given JSONPath $path', ({ start, end, path }) => {
       expect(getLocationForJsonPath(result, path)).toEqual({
         range: {

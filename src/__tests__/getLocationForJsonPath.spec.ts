@@ -68,19 +68,18 @@ describe('getLocationForJsonPath', () => {
   describe('spectral bug #170 fixture', () => {
     const result = parseWithPointers(spectral170);
 
-    test.each`
-      start       | end         | path
-      ${[35, 20]} | ${[35, 20]} | ${['definitions', 'AnotherDefinition', 'properties', 'special', 'description']}
-    `('should return proper location for given JSONPath $path', ({ start, end, path }) => {
-      expect(getLocationForJsonPath(result, path)).toEqual({
+    test('should return proper location for empty mapping value', () => {
+      expect(
+        getLocationForJsonPath(result, ['definitions', 'AnotherDefinition', 'properties', 'special', 'description'])
+      ).toEqual({
         range: {
           start: {
-            character: start[1],
-            line: start[0],
+            character: 20,
+            line: 35,
           },
           end: {
-            character: end[1],
-            line: end[0],
+            character: 20,
+            line: 35,
           },
         },
       });

@@ -1,0 +1,36 @@
+swagger: '2.0'
+
+info:
+  title: Repro two
+  description: Endpoint definition
+  version: "1.0.0"
+  contact:
+    name: toto
+host: not-example.com
+schemes:
+  - https
+basePath: /repro/two
+
+paths:
+  /quotes_requests:
+    post:
+      summary: Gets nothing either.
+      operationId: "12"
+      description: Cf. summary
+      tags: [yep]
+      parameters:
+        - name: body
+          description: Content.
+          in: body
+          schema:
+            $ref: '#/definitions/AnotherDefinition'
+      responses:
+        204:
+          description: Zip
+
+definitions:
+  AnotherDefinition:
+    type: object
+    properties:
+      special:
+        description:

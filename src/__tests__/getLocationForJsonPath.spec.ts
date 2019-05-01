@@ -4,6 +4,7 @@ import { getLocationForJsonPath } from '../getLocationForJsonPath';
 import { parseWithPointers } from '../parseWithPointers';
 
 const petStore = fs.readFileSync(join(__dirname, './fixtures/petstore.oas2.yaml'), 'utf-8');
+const spectral170 = fs.readFileSync(join(__dirname, './fixtures/spectral-170.yaml'), 'utf-8');
 const simple = `hello: world
 address:
   street: 123`;
@@ -58,6 +59,27 @@ describe('getLocationForJsonPath', () => {
           end: {
             character: end[1],
             line: end[0],
+          },
+        },
+      });
+    });
+  });
+
+  describe('spectral bug #170 fixture', () => {
+    const result = parseWithPointers(spectral170);
+
+    test('should return proper location for empty mapping value', () => {
+      expect(
+        getLocationForJsonPath(result, ['definitions', 'AnotherDefinition', 'properties', 'special', 'description'])
+      ).toEqual({
+        range: {
+          start: {
+            character: 20,
+            line: 35,
+          },
+          end: {
+            character: 20,
+            line: 35,
           },
         },
       });

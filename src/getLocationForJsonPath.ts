@@ -2,9 +2,13 @@ import { GetLocationForJsonPath, ILocation, JsonPath } from '@stoplight/types';
 import { Kind, YAMLNode, YAMLSequence } from 'yaml-ast-parser';
 import { lineForPosition } from './lineForPosition';
 
-export const getLocationForJsonPath: GetLocationForJsonPath<YAMLNode, number[]> = ({ ast, lineMap }, path, closest = false) => {
+export const getLocationForJsonPath: GetLocationForJsonPath<YAMLNode, number[]> = (
+  { ast, lineMap },
+  path,
+  closest = false
+) => {
   const node = findNodeAtPath(ast, path, closest);
-  if (node === undefined) return;
+  if (node === void 0) return;
 
   return getLoc(lineMap, { start: getStartPosition(node), end: getEndPosition(node) });
 };
@@ -70,7 +74,7 @@ function findNodeAtPath(node: YAMLNode, path: JsonPath, closest: boolean) {
           }
         }
 
-        return closest ? node : undefined;
+        return closest ? node : void 0;
       case Kind.SEQ:
         for (let i = 0; i < (node as YAMLSequence).items.length; i++) {
           if (i === Number(segment)) {
@@ -79,9 +83,9 @@ function findNodeAtPath(node: YAMLNode, path: JsonPath, closest: boolean) {
           }
         }
 
-        return closest ? node : undefined;
+        return closest ? node : void 0;
       default:
-        return closest ? node : undefined;
+        return closest ? node : void 0;
     }
   }
 

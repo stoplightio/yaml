@@ -50,7 +50,7 @@ const walk = (node: YAMLNode | null): unknown => {
       case Kind.SCALAR:
         return 'valueObject' in node ? node.valueObject : node.value;
       case Kind.ANCHOR_REF:
-        if (node.value !== undefined && isCircularAnchorRef(node as YAMLAnchorReference)) {
+        if (node.value !== void 0 && isCircularAnchorRef(node as YAMLAnchorReference)) {
           node.value = dereferenceAnchor(node.value, (node as YAMLAnchorReference).referencesAnchor);
         }
 

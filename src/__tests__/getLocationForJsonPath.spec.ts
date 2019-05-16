@@ -22,7 +22,7 @@ describe('getLocationForJsonPath', () => {
       ${[29, 8]}  | ${[31, 8]}   | ${['schemes']}                                   | ${false}
       ${[32, 6]}  | ${[104, 23]} | ${['paths']}                                     | ${false}
       ${[40, 15]} | ${[42, 25]}  | ${['paths', '/pets', 'post', 'consumes']}        | ${false}
-      ${[40, 15]} | ${[42, 25]}  | ${['paths', '/pets', 'post', 'consumes', 5]}        | ${true}
+      ${[40, 15]} | ${[42, 25]}  | ${['paths', '/pets', 'post', 'consumes', 5]}     | ${true}
       ${[]}       | ${[]}        | ${['paths', '/pets', 'post', 'consumes', 5]}     | ${false}
       ${[41, 10]} | ${[41, 26]}  | ${['paths', '/pets', 'post', 'consumes', 0]}     | ${false}
       ${[41, 10]} | ${[41, 26]}  | ${['paths', '/pets', 'post', 'consumes', 0, 1]}  | ${true}
@@ -45,7 +45,7 @@ describe('getLocationForJsonPath', () => {
                 },
               },
             }
-          : undefined
+          : void 0
       );
     });
   });

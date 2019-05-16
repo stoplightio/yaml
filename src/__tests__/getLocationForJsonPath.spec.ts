@@ -14,30 +14,39 @@ describe('getLocationForJsonPath', () => {
     const result = parseWithPointers(petStore);
 
     test.each`
-      start       | end          | path
-      ${[9, 10]}  | ${[10, 29]}  | ${['info', 'contact']}
-      ${[10, 11]} | ${[10, 29]}  | ${['info', 'contact', 'email']}
-      ${[9, 10]}  | ${[10, 29]}  | ${['info', 'contact', 'dasdas']}
-      ${[29, 8]}  | ${[31, 8]}   | ${['schemes']}
-      ${[32, 6]}  | ${[104, 23]} | ${['paths']}
-      ${[40, 15]} | ${[42, 25]}  | ${['paths', '/pets', 'post', 'consumes']}
-      ${[41, 10]} | ${[41, 26]}  | ${['paths', '/pets', 'post', 'consumes', 0]}
-      ${[41, 10]} | ${[41, 26]}  | ${['paths', '/pets', 'post', 'consumes', '0']}
-      ${[60, 8]}  | ${[71, 60]}  | ${['paths', '/pets', 'get']}
-      ${[62, 14]} | ${[66, 26]}  | ${['paths', '/pets', 'get', 'responses', '200']}
-    `('should return proper location for given JSONPath $path', ({ start, end, path }) => {
-      expect(getLocationForJsonPath(result, path)).toEqual({
-        range: {
-          start: {
-            character: start[1],
-            line: start[0],
-          },
-          end: {
-            character: end[1],
-            line: end[0],
-          },
-        },
-      });
+      start       | end          | path                                             | closest
+      ${[9, 10]}  | ${[10, 29]}  | ${['info', 'contact']}                           | ${false}
+      ${[10, 11]} | ${[10, 29]}  | ${['info', 'contact', 'email']}                  | ${false}
+      ${[9, 10]}  | ${[10, 29]}  | ${['info', 'contact', 'dasdas']}                 | ${true}
+      ${[]}       | ${[]}        | ${['info', 'contact', 'dasdas']}                 | ${false}
+      ${[29, 8]}  | ${[31, 8]}   | ${['schemes']}                                   | ${false}
+      ${[32, 6]}  | ${[104, 23]} | ${['paths']}                                     | ${false}
+      ${[40, 15]} | ${[42, 25]}  | ${['paths', '/pets', 'post', 'consumes']}        | ${false}
+      ${[40, 15]} | ${[42, 25]}  | ${['paths', '/pets', 'post', 'consumes', 5]}        | ${true}
+      ${[]}       | ${[]}        | ${['paths', '/pets', 'post', 'consumes', 5]}     | ${false}
+      ${[41, 10]} | ${[41, 26]}  | ${['paths', '/pets', 'post', 'consumes', 0]}     | ${false}
+      ${[41, 10]} | ${[41, 26]}  | ${['paths', '/pets', 'post', 'consumes', 0, 1]}  | ${true}
+      ${[]}       | ${[]}        | ${['paths', '/pets', 'post', 'consumes', 0, 1]}  | ${false}
+      ${[41, 10]} | ${[41, 26]}  | ${['paths', '/pets', 'post', 'consumes', '0']}   | ${false}
+      ${[60, 8]}  | ${[71, 60]}  | ${['paths', '/pets', 'get']}                     | ${false}
+      ${[62, 14]} | ${[66, 26]}  | ${['paths', '/pets', 'get', 'responses', '200']} | ${false}
+    `('should return proper location for given JSONPath $path', ({ start, end, path, closest }) => {
+      expect(getLocationForJsonPath(result, path, closest)).toEqual(
+        start.length > 0 && end.length > 0
+          ? {
+              range: {
+                start: {
+                  character: start[1],
+                  line: start[0],
+                },
+                end: {
+                  character: end[1],
+                  line: end[0],
+                },
+              },
+            }
+          : undefined
+      );
     });
   });
 

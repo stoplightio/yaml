@@ -36,7 +36,7 @@ describe('getJsonPathForPosition', () => {
     test.each`
       line | character | path
       ${0} | ${0}      | ${['hello']}
-      ${0} | ${13}     | ${undefined}
+      ${0} | ${13}     | ${void 0}
       ${0} | ${4}      | ${['hello']}
       ${1} | ${0}      | ${['address']}
       ${1} | ${7}      | ${['address']}
@@ -62,7 +62,7 @@ describe('getJsonPathForPosition', () => {
       ${12}  | ${51}     | ${['map', 'Flow style', 'Oren']}
       ${12}  | ${52}     | ${['map', 'Flow style', 'Oren']}
       ${12}  | ${57}     | ${['map', 'Flow style', 'Oren']}
-      ${13}  | ${0}      | ${undefined}
+      ${13}  | ${0}      | ${void 0}
       ${19}  | ${0}      | ${['omap', 'Bestiary', 0, 'aardvark']}
       ${19}  | ${10}     | ${['omap', 'Bestiary', 0, 'aardvark']}
       ${19}  | ${32}     | ${['omap', 'Bestiary', 0, 'aardvark']}
@@ -88,7 +88,7 @@ describe('getJsonPathForPosition', () => {
       ${63}  | ${31}     | ${['seq', 'Flow style', 5]}
       ${63}  | ${42}     | ${['seq', 'Flow style', 6]}
       ${63}  | ${50}     | ${['seq', 'Flow style', 7]}
-      ${66}  | ${0}      | ${undefined}
+      ${66}  | ${0}      | ${void 0}
       ${138} | ${0}      | ${['null', '~']}
       ${202} | ${12}     | ${['foobar']}
       ${204} | ${7}      | ${['foobar', 1]}

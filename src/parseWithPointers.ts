@@ -23,7 +23,7 @@ export const parseWithPointers = <T>(value: string): YamlParserResult<T> => {
 
   if (!ast) return parsed;
 
-  parsed.data = walk(ast) as T;
+  parsed.data = walkAST(ast) as T;
 
   if (ast.errors) {
     parsed.diagnostics = transformErrors(ast.errors, lineMap);
@@ -32,7 +32,7 @@ export const parseWithPointers = <T>(value: string): YamlParserResult<T> => {
   return parsed;
 };
 
-const walk = (node: YAMLNode | null): unknown => {
+export const walkAST = (node: YAMLNode | null): unknown => {
   if (node) {
     switch (node.kind) {
       case Kind.MAP: {
@@ -40,13 +40,13 @@ const walk = (node: YAMLNode | null): unknown => {
         // note, we don't handle null aka '~' keys on purpose
         for (const mapping of (node as YamlMap).mappings) {
           // typing is broken, value might be null
-          container[mapping.key.value] = walk(mapping.value);
+          container[mapping.key.value] = walkAST(mapping.value);
         }
 
         return container;
       }
       case Kind.SEQ:
-        return (node as YAMLSequence).items.map(item => walk(item));
+        return (node as YAMLSequence).items.map(item => walkAST(item));
       case Kind.SCALAR:
         return 'valueObject' in node ? node.valueObject : node.value;
       case Kind.ANCHOR_REF:
@@ -54,7 +54,7 @@ const walk = (node: YAMLNode | null): unknown => {
           node.value = dereferenceAnchor(node.value, (node as YAMLAnchorReference).referencesAnchor);
         }
 
-        return walk(node.value);
+        return walkAST(node.value);
       default:
         return null;
     }

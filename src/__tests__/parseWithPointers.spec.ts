@@ -1,36 +1,11 @@
 import { DiagnosticSeverity } from '@stoplight/types';
+import * as fs from 'fs';
+import * as path from 'path';
 import { parseWithPointers } from '../parseWithPointers';
 import * as HugeJSON from './fixtures/huge-json.json';
 import { HugeYAML } from './fixtures/huge-yaml';
 
-const diverse = `---
-  # <- yaml supports comments, json does not
-  # did you know you can embed json in yaml?
-  # try uncommenting the next line
-  # { foo: 'bar' }
-
-  json:
-    - rigid
-    - better for data interchange
-  yaml:
-    - slim and flexible
-    - 123
-    - true
-  object:
-    key: value
-    array:
-      - null_value:
-      - boolean: true
-      - integer: 1
-  paragraph: >
-      Blank lines denote
-
-      paragraph breaks
-  content: |-
-      Or we
-      can auto
-      convert line breaks
-      to save space`;
+const diverse = fs.readFileSync(path.join(__dirname, './fixtures/diverse.yaml'), 'utf-8');
 
 describe('yaml parser', () => {
   test.each(['test', 1])('parse scalar $s', val => {

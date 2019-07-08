@@ -39,7 +39,7 @@ function getEndPosition(node: YAMLNode): number {
   switch (node.kind) {
     case Kind.SEQ:
       const { items } = node as YAMLSequence;
-      if (items.length !== 0) {
+      if (items.length !== 0 && items[items.length - 1] !== null) {
         return getEndPosition(items[items.length - 1]);
       }
       break;
@@ -56,7 +56,7 @@ function getEndPosition(node: YAMLNode): number {
       break;
     case Kind.SCALAR:
       // the parent is a mapping with no value, let's default to the end of node
-      if (node.parent.kind === Kind.MAPPING && node.parent.value === null) {
+      if (node.parent !== null && node.parent.kind === Kind.MAPPING && node.parent.value === null) {
         return node.parent.endPosition;
       }
 

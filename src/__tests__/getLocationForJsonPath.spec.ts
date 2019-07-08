@@ -158,4 +158,14 @@ describe('getLocationForJsonPath', () => {
       );
     });
   });
+
+  it('should handle null-ish items', () => {
+    const result = parseWithPointers(`----~
+foo: bar
+`);
+
+    expect(() => getLocationForJsonPath(result, ['foo'])).not.toThrow();
+    expect(() => getLocationForJsonPath(result, ['bar'], true)).not.toThrow();
+    expect(() => getLocationForJsonPath(result, ['null'], true)).not.toThrow();
+  });
 });

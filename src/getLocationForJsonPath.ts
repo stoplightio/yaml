@@ -10,10 +10,13 @@ export const getLocationForJsonPath: GetLocationForJsonPath<YAMLNode, number[]> 
   const node = findNodeAtPath(ast, path, closest);
   if (node === void 0) return;
 
-  return getLoc(lineMap, { start: getStartPosition(node), end: getEndPosition(node) });
+  return getLoc(lineMap, {
+    start: getStartPosition(node, lineMap.length > 0 ? lineMap[0] : 0),
+    end: getEndPosition(node),
+  });
 };
 
-function getStartPosition(node: YAMLNode): number {
+function getStartPosition(node: YAMLNode, offset: number): number {
   if (node.parent && node.parent.kind === Kind.MAPPING) {
     // the parent is a mapping with no value, let's default to the end of node
     if (node.parent.value === null) {
@@ -25,6 +28,10 @@ function getStartPosition(node: YAMLNode): number {
     }
   }
 
+  if (node.parent === null && offset - node.startPosition === 0) {
+    return 0;
+  }
+
   return node.startPosition;
 }
 
@@ -32,7 +39,7 @@ function getEndPosition(node: YAMLNode): number {
   switch (node.kind) {
     case Kind.SEQ:
       const { items } = node as YAMLSequence;
-      if (items.length !== 0) {
+      if (items.length !== 0 && items[items.length - 1] !== null) {
         return getEndPosition(items[items.length - 1]);
       }
       break;
@@ -49,7 +56,7 @@ function getEndPosition(node: YAMLNode): number {
       break;
     case Kind.SCALAR:
       // the parent is a mapping with no value, let's default to the end of node
-      if (node.parent.kind === Kind.MAPPING && node.parent.value === null) {
+      if (node.parent !== null && node.parent.kind === Kind.MAPPING && node.parent.value === null) {
         return node.parent.endPosition;
       }
 
@@ -95,6 +102,7 @@ function findNodeAtPath(node: YAMLNode, path: JsonPath, closest: boolean) {
 const getLoc = (lineMap: number[], { start = 0, end = 0 }): ILocation => {
   const startLine = lineForPosition(start, lineMap);
   const endLine = lineForPosition(end, lineMap);
+
   return {
     range: {
       start: {

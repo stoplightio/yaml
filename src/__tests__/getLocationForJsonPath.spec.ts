@@ -5,6 +5,8 @@ import { parseWithPointers } from '../parseWithPointers';
 
 const petStore = fs.readFileSync(join(__dirname, './fixtures/petstore.oas2.yaml'), 'utf-8');
 const spectral170 = fs.readFileSync(join(__dirname, './fixtures/spectral-170.yaml'), 'utf-8');
+const spectralCRLF = fs.readFileSync(join(__dirname, './fixtures/spectral-crlf.yaml'), 'utf-8');
+const spectralLF = fs.readFileSync(join(__dirname, './fixtures/spectral-lf.yaml'), 'utf-8');
 const simple = `hello: world
 address:
   street: 123`;
@@ -93,5 +95,77 @@ describe('getLocationForJsonPath', () => {
         },
       });
     });
+  });
+
+  describe('CRLF fixture', () => {
+    const resultCRLF = parseWithPointers(spectralCRLF);
+    const resultLF = parseWithPointers(spectralLF);
+
+    test.each`
+      start     | end        | path                   | closest
+      ${[0, 0]} | ${[5, 9]}  | ${['servers']}         | ${true}
+      ${[2, 5]} | ${[4, 13]} | ${['info']}            | ${true}
+      ${[2, 5]} | ${[4, 13]} | ${['info', 'server']}  | ${true}
+      ${[2, 5]} | ${[4, 13]} | ${['info', 'contact']} | ${true}
+      ${[4, 9]} | ${[4, 13]} | ${['info', 'title']}   | ${true}
+      ${[5, 6]} | ${[5, 9]}  | ${['paths']}           | ${true}
+    `('should return proper location for given JSONPath $path', ({ start, end, path, closest }) => {
+      expect(getLocationForJsonPath(resultCRLF, path, closest)).toEqual(
+        getLocationForJsonPath(resultLF, path, closest)
+      );
+      expect(getLocationForJsonPath(resultCRLF, path)).toEqual(getLocationForJsonPath(resultLF, path));
+      expect(getLocationForJsonPath(resultCRLF, path, closest)).toEqual(
+        start.length > 0 && end.length > 0
+          ? {
+              range: {
+                start: {
+                  character: start[1],
+                  line: start[0],
+                },
+                end: {
+                  character: end[1],
+                  line: end[0],
+                },
+              },
+            }
+          : void 0
+      );
+    });
+  });
+
+  describe('shifted fixture', () => {
+    const result = parseWithPointers(`--- foobar: bar`);
+
+    test.each`
+      start     | end        | path         | closest
+      ${[0, 4]} | ${[0, 15]} | ${['paths']} | ${true}
+    `('should return proper location for given JSONPath $path', ({ start, end, path, closest }) => {
+      expect(getLocationForJsonPath(result, path, closest)).toEqual(
+        start.length > 0 && end.length > 0
+          ? {
+              range: {
+                start: {
+                  character: start[1],
+                  line: start[0],
+                },
+                end: {
+                  character: end[1],
+                  line: end[0],
+                },
+              },
+            }
+          : void 0
+      );
+    });
+  });
+
+  it('should handle null-ish items', () => {
+    const result = parseWithPointers(`----~
+foo: bar
+`);
+
+    expect(() => getLocationForJsonPath(result, ['foo'])).not.toThrow();
+    expect(() => getLocationForJsonPath(result, ['bar'], true)).not.toThrow();
+    expect(() => getLocationForJsonPath(result, ['null'], true)).not.toThrow();
   });
 });

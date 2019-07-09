@@ -23,7 +23,7 @@ export const lineForPosition = (pos: number, lines: number[], start: number = 0,
   // if pos is between target and the next line's position, we're good!
   const nextLinePos = lines[Math.min(target + 1, lines.length)];
 
-  if (pos === lines[target]) {
+  if (pos === lines[target] - 1) {
     return target;
   }
 

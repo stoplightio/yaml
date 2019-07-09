@@ -7,6 +7,7 @@ describe('lineForPosition', () => {
     expect(lineForPosition(0, lines)).toEqual(0);
 
     expect(lineForPosition(12, lines)).toEqual(0);
+    expect(lineForPosition(13, lines)).toEqual(1);
     expect(lineForPosition(35, lines)).toEqual(2);
 
     // last line
@@ -47,7 +48,7 @@ describe('lineForPosition', () => {
     // first line
     expect(lineForPosition(0, lines)).toEqual(0);
     expect(lineForPosition(1, lines)).toEqual(0);
-    expect(lineForPosition(4, lines)).toEqual(0);
+    expect(lineForPosition(4, lines)).toEqual(1);
     expect(lineForPosition(5, lines)).toEqual(1);
     expect(lineForPosition(51, lines)).toEqual(2);
     expect(lineForPosition(255, lines)).toEqual(12);

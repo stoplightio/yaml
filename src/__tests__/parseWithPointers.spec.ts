@@ -235,4 +235,69 @@ european-cities: &cities
       expect(() => JSON.stringify(result.data)).not.toThrow();
     });
   });
+
+  test('reports duplicated properties', () => {
+    expect(parseWithPointers('foo: 0\nfoo: 0\n', { ignoreDuplicateKeys: false })).toHaveProperty('diagnostics', [
+      {
+        code: 'YAMLException',
+        message: 'duplicate key',
+        range: {
+          start: {
+            line: 1,
+            character: 0,
+          },
+          end: {
+            line: 1,
+            character: 3,
+          },
+        },
+        severity: DiagnosticSeverity.Error,
+      },
+    ]);
+
+    expect(
+      parseWithPointers(
+        `baz:
+  duplicated: 2
+  baz: 3
+  duplicated: boo
+  duplicated: 
+    - yes
+    - unfortunately, I am a dupe.
+`,
+        { ignoreDuplicateKeys: false }
+      )
+    ).toHaveProperty('diagnostics', [
+      {
+        code: 'YAMLException',
+        message: 'duplicate key',
+        range: {
+          start: {
+            line: 3,
+            character: 2,
+          },
+          end: {
+            line: 3,
+            character: 12,
+          },
+        },
+        severity: DiagnosticSeverity.Error,
+      },
+      {
+        code: 'YAMLException',
+        message: 'duplicate key',
+        range: {
+          start: {
+            line: 4,
+            character: 2,
+          },
+          end: {
+            line: 4,
+            character: 12,
+          },
+        },
+        severity: DiagnosticSeverity.Error,
+      },
+    ]);
+  });
 });

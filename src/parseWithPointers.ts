@@ -2,17 +2,22 @@ import { DiagnosticSeverity, IDiagnostic } from '@stoplight/types';
 import {
   Kind,
   load as loadAST,
+  LoadOptions,
   YAMLAnchorReference,
   YAMLException,
   YamlMap,
   YAMLNode,
   YAMLSequence,
 } from 'yaml-ast-parser';
+import { lineForPosition } from './lineForPosition';
 import { YamlParserResult } from './types';
 
-export const parseWithPointers = <T>(value: string): YamlParserResult<T> => {
+export const parseWithPointers = <T>(value: string, options?: LoadOptions): YamlParserResult<T> => {
   const lineMap = computeLineMap(value);
-  const ast = loadAST(value);
+  const ast = loadAST(value, {
+    ...options,
+    ignoreDuplicateKeys: true,
+  });
 
   const parsed: YamlParserResult<T> = {
     ast,
@@ -23,16 +28,29 @@ export const parseWithPointers = <T>(value: string): YamlParserResult<T> => {
 
   if (!ast) return parsed;
 
-  parsed.data = walkAST(ast) as T;
+  const duplicatedMappingKeys: YAMLNode[] = [];
+
+  parsed.data = walkAST(
+    ast,
+    options !== undefined && options.ignoreDuplicateKeys === false ? duplicatedMappingKeys : undefined
+  ) as T;
+
+  if (duplicatedMappingKeys.length > 0) {
+    parsed.diagnostics.push(...transformDuplicatedMappingKeys(duplicatedMappingKeys, lineMap));
+  }
 
   if (ast.errors) {
-    parsed.diagnostics = transformErrors(ast.errors, lineMap);
+    parsed.diagnostics.push(...transformErrors(ast.errors, lineMap));
+  }
+
+  if (parsed.diagnostics.length > 0) {
+    parsed.diagnostics.sort((itemA, itemB) => itemA.range.start.line - itemB.range.start.line);
   }
 
   return parsed;
 };
 
-export const walkAST = (node: YAMLNode | null): unknown => {
+export const walkAST = (node: YAMLNode | null, duplicatedMappingKeys?: YAMLNode[]): unknown => {
   if (node) {
     switch (node.kind) {
       case Kind.MAP: {
@@ -40,13 +58,17 @@ export const walkAST = (node: YAMLNode | null): unknown => {
         // note, we don't handle null aka '~' keys on purpose
         for (const mapping of (node as YamlMap).mappings) {
           // typing is broken, value might be null
-          container[mapping.key.value] = walkAST(mapping.value);
+          if (duplicatedMappingKeys !== undefined && mapping.key.value in container) {
+            duplicatedMappingKeys.push(mapping.key);
+          }
+
+          container[mapping.key.value] = walkAST(mapping.value, duplicatedMappingKeys);
         }
 
         return container;
       }
       case Kind.SEQ:
-        return (node as YAMLSequence).items.map(item => walkAST(item));
+        return (node as YAMLSequence).items.map(item => walkAST(item, duplicatedMappingKeys));
       case Kind.SCALAR:
         return 'valueObject' in node ? node.valueObject : node.value;
       case Kind.ANCHOR_REF:
@@ -54,7 +76,7 @@ export const walkAST = (node: YAMLNode | null): unknown => {
           node.value = dereferenceAnchor(node.value, (node as YAMLAnchorReference).referencesAnchor);
         }
 
-        return walkAST(node.value);
+        return walkAST(node.value, duplicatedMappingKeys);
       default:
         return null;
     }
@@ -148,6 +170,32 @@ const transformErrors = (errors: YAMLException[], lineMap: number[]): IDiagnosti
     };
 
     validations.push(validation);
+  }
+
+  return validations;
+};
+
+const transformDuplicatedMappingKeys = (nodes: YAMLNode[], lineMap: number[]): IDiagnostic[] => {
+  const validations: IDiagnostic[] = [];
+  for (const node of nodes) {
+    const startLine = lineForPosition(node.startPosition, lineMap);
+    const endLine = lineForPosition(node.endPosition, lineMap);
+
+    validations.push({
+      code: 'YAMLException',
+      message: 'duplicate key',
+      range: {
+        start: {
+          line: startLine,
+          character: startLine === 0 ? node.startPosition : node.startPosition - lineMap[startLine - 1],
+        },
+        end: {
+          line: endLine,
+          character: endLine === 0 ? node.endPosition : node.endPosition - lineMap[endLine - 1],
+        },
+      },
+      severity: DiagnosticSeverity.Error,
+    });
   }
 
   return validations;

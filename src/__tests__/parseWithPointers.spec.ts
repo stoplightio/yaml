@@ -241,6 +241,7 @@ european-cities: &cities
       {
         code: 'YAMLException',
         message: 'duplicate key',
+        path: ['foo'],
         range: {
           start: {
             line: 1,
@@ -271,6 +272,7 @@ european-cities: &cities
       {
         code: 'YAMLException',
         message: 'duplicate key',
+        path: ['baz', 'duplicated'],
         range: {
           start: {
             line: 3,
@@ -286,6 +288,7 @@ european-cities: &cities
       {
         code: 'YAMLException',
         message: 'duplicate key',
+        path: ['baz', 'duplicated'],
         range: {
           start: {
             line: 4,

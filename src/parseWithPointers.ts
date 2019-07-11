@@ -9,6 +9,7 @@ import {
   YAMLNode,
   YAMLSequence,
 } from 'yaml-ast-parser';
+import { buildJsonPath } from './buildJsonPath';
 import { lineForPosition } from './lineForPosition';
 import { YamlParserResult } from './types';
 
@@ -184,6 +185,7 @@ const transformDuplicatedMappingKeys = (nodes: YAMLNode[], lineMap: number[]): I
     validations.push({
       code: 'YAMLException',
       message: 'duplicate key',
+      path: buildJsonPath(node),
       range: {
         start: {
           line: startLine,

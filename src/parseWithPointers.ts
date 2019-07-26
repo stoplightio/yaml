@@ -2,7 +2,6 @@ import { DiagnosticSeverity, IDiagnostic } from '@stoplight/types';
 import {
   Kind,
   load as loadAST,
-  LoadOptions,
   YAMLAnchorReference,
   YAMLException,
   YamlMap,
@@ -11,9 +10,9 @@ import {
 } from 'yaml-ast-parser';
 import { buildJsonPath } from './buildJsonPath';
 import { lineForPosition } from './lineForPosition';
-import { YamlParserResult } from './types';
+import { IParseOptions, YamlParserResult } from './types';
 
-export const parseWithPointers = <T>(value: string, options?: LoadOptions): YamlParserResult<T> => {
+export const parseWithPointers = <T>(value: string, options?: IParseOptions): YamlParserResult<T> => {
   const lineMap = computeLineMap(value);
   const ast = loadAST(value, {
     ...options,
@@ -25,6 +24,7 @@ export const parseWithPointers = <T>(value: string, options?: LoadOptions): Yaml
     lineMap,
     data: {} as T, // fixme: we most likely should have undefined here, but this might be breaking
     diagnostics: [],
+    metadata: options,
   };
 
   if (!ast) return parsed;
@@ -33,7 +33,8 @@ export const parseWithPointers = <T>(value: string, options?: LoadOptions): Yaml
 
   parsed.data = walkAST(
     ast,
-    options !== undefined && options.ignoreDuplicateKeys === false ? duplicatedMappingKeys : undefined
+    options !== undefined && options.ignoreDuplicateKeys === false ? duplicatedMappingKeys : undefined,
+    options !== undefined && options.mergeKeys === true
   ) as T;
 
   if (duplicatedMappingKeys.length > 0) {
@@ -45,13 +46,13 @@ export const parseWithPointers = <T>(value: string, options?: LoadOptions): Yaml
   }
 
   if (parsed.diagnostics.length > 0) {
-    parsed.diagnostics.sort((itemA, itemB) => itemA.range.start.line - itemB.range.start.line);
+    (parsed.diagnostics as IDiagnostic[]).sort((itemA, itemB) => itemA.range.start.line - itemB.range.start.line);
   }
 
   return parsed;
 };
 
-export const walkAST = (node: YAMLNode | null, duplicatedMappingKeys?: YAMLNode[]): unknown => {
+export const walkAST = (node: YAMLNode | null, duplicatedMappingKeys?: YAMLNode[], mergeKeys?: boolean): unknown => {
   if (node) {
     switch (node.kind) {
       case Kind.MAP: {
@@ -63,13 +64,19 @@ export const walkAST = (node: YAMLNode | null, duplicatedMappingKeys?: YAMLNode[
             duplicatedMappingKeys.push(mapping.key);
           }
 
-          container[mapping.key.value] = walkAST(mapping.value, duplicatedMappingKeys);
+          // https://yaml.org/type/merge.html merge keys, not a part of YAML spec
+          if (mergeKeys && mapping.key.value === '<<') {
+            // todo: handle << dupes?
+            Object.assign(container, reduceMergeKeys(walkAST(mapping.value, duplicatedMappingKeys, mergeKeys)));
+          } else {
+            container[mapping.key.value] = walkAST(mapping.value, duplicatedMappingKeys, mergeKeys);
+          }
         }
 
         return container;
       }
       case Kind.SEQ:
-        return (node as YAMLSequence).items.map(item => walkAST(item, duplicatedMappingKeys));
+        return (node as YAMLSequence).items.map(item => walkAST(item, duplicatedMappingKeys, mergeKeys));
       case Kind.SCALAR:
         return 'valueObject' in node ? node.valueObject : node.value;
       case Kind.ANCHOR_REF:
@@ -77,7 +84,7 @@ export const walkAST = (node: YAMLNode | null, duplicatedMappingKeys?: YAMLNode[
           node.value = dereferenceAnchor(node.value, (node as YAMLAnchorReference).referencesAnchor);
         }
 
-        return walkAST(node.value, duplicatedMappingKeys);
+        return walkAST(node.value, duplicatedMappingKeys, mergeKeys);
       default:
         return null;
     }
@@ -201,4 +208,12 @@ const transformDuplicatedMappingKeys = (nodes: YAMLNode[], lineMap: number[]): I
   }
 
   return validations;
+};
+
+const reduceMergeKeys = (items: unknown): object | null => {
+  if (Array.isArray(items)) {
+    return items.reduce((merged, item) => Object.assign(merged, item), {});
+  }
+
+  return typeof items !== 'object' || items === null ? null : Object(items);
 };

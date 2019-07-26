@@ -1,9 +1,10 @@
 import { GetJsonPathForPosition } from '@stoplight/types';
 import { Kind, YamlMap, YAMLMapping, YAMLNode, YAMLSequence } from 'yaml-ast-parser';
 import { buildJsonPath } from './buildJsonPath';
+import { YamlParserResult } from './types';
 import { isValidNode } from './utils';
 
-export const getJsonPathForPosition: GetJsonPathForPosition<YAMLNode, number[]> = (
+export const getJsonPathForPosition: GetJsonPathForPosition<YamlParserResult<object>> = (
   { ast, lineMap },
   { line, character }
 ) => {

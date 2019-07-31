@@ -1,10 +1,10 @@
 import { GetLocationForJsonPath, ILocation, JsonPath } from '@stoplight/types';
-import { Kind, YAMLAnchorReference, YAMLNode, YAMLSequence } from 'yaml-ast-parser';
+import { Kind, YAMLNode, YAMLSequence } from 'yaml-ast-parser';
 import { YAMLMapping } from 'yaml-ast-parser/src/yamlAST';
 import { SpecialMappingKeys } from './consts';
 import { lineForPosition } from './lineForPosition';
 import { YamlParserResult } from './types';
-import { isValidNode } from './utils';
+import { isObject } from './utils';
 
 export const getLocationForJsonPath: GetLocationForJsonPath<YamlParserResult<object>> = (
   { ast, lineMap, metadata },
@@ -79,6 +79,8 @@ function findNodeAtPath(
     switch (node && node.kind) {
       case Kind.MAP:
         const mappings = getMappings(node.mappings, mergeKeys);
+        // we iterate from the last to first to be compliant with JSONish mode
+        // in other words, iterating from the last to first guarantees we choose the last node that might override other matching nodes
         for (let i = mappings.length - 1; i >= 0; i--) {
           const item = mappings[i];
           if (item.key.value === segment) {
@@ -113,7 +115,7 @@ function getMappings(mappings: YAMLMapping[], mergeKeys: boolean): YAMLMapping[]
   if (!mergeKeys) return mappings;
 
   return mappings.reduce<YAMLMapping[]>((mergedMappings, mapping) => {
-    if (isValidNode(mapping as YAMLNode)) {
+    if (isObject(mapping)) {
       if (mapping.key.value === SpecialMappingKeys.MergeKey) {
         mergedMappings.push(...reduceMergeKeys((mapping as YAMLMapping).value as YAMLNode));
       } else {
@@ -135,7 +137,7 @@ function reduceMergeKeys(node: YAMLNode): YAMLMapping[] {
     case Kind.MAP:
       return node.mappings;
     case Kind.ANCHOR_REF:
-      return reduceMergeKeys((node as YAMLAnchorReference).value);
+      return reduceMergeKeys(node.value);
     default:
       return [];
   }

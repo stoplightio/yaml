@@ -47,7 +47,7 @@ export const parseWithPointers = <T>(value: string, options?: IParseOptions): Ya
   }
 
   if (parsed.diagnostics.length > 0) {
-    (parsed.diagnostics as IDiagnostic[]).sort((itemA, itemB) => itemA.range.start.line - itemB.range.start.line);
+    parsed.diagnostics.sort((itemA, itemB) => itemA.range.start.line - itemB.range.start.line);
   }
 
   return parsed;
@@ -222,7 +222,7 @@ const transformDuplicatedMappingKeys = (nodes: YAMLNode[], lineMap: number[]): I
 
 const reduceMergeKeys = (items: unknown): object | null => {
   if (Array.isArray(items)) {
-    // reduceRight is on purpose here!
+    // reduceRight is on purpose here! We need to respect the order - the key cannot be overridden..
     return items.reduceRight((merged, item) => Object.assign(merged, item), {});
   }
 

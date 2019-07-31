@@ -1,3 +1,1 @@
-import { YAMLNode } from 'yaml-ast-parser';
-
-export const isValidNode = (node: YAMLNode) => node !== null && node !== undefined;
+export const isObject = (sth: unknown) => sth !== null && typeof sth === 'object';

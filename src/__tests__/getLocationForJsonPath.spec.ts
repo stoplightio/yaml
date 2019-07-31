@@ -7,7 +7,7 @@ const petStore = fs.readFileSync(join(__dirname, './fixtures/petstore.oas2.yaml'
 const spectral170 = fs.readFileSync(join(__dirname, './fixtures/spectral-170.yaml'), 'utf-8');
 const spectralCRLF = fs.readFileSync(join(__dirname, './fixtures/spectral-crlf.yaml'), 'utf-8');
 const spectralLF = fs.readFileSync(join(__dirname, './fixtures/spectral-lf.yaml'), 'utf-8');
-const mergeKeys = fs.readFileSync(join(__dirname, './fixtures/merge-keys.yaml'), 'utf-8');
+const spectralSpecMergeKeys = fs.readFileSync(join(__dirname, './fixtures/spectral-spec-merge-keys.yaml'), 'utf-8');
 const duplicateMergeKeys = fs.readFileSync(join(__dirname, './fixtures/duplicate-merge-keys.yaml'), 'utf-8');
 const simple = `hello: world
 address:
@@ -79,7 +79,7 @@ describe('getLocationForJsonPath', () => {
   });
 
   describe('merge keys fixture', () => {
-    const result = parseWithPointers(mergeKeys, { mergeKeys: true });
+    const result = parseWithPointers(spectralSpecMergeKeys, { mergeKeys: true });
 
     test.each`
       start       | end         | path

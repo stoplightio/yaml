@@ -319,6 +319,95 @@ european-cities: &cities
   });
 
   describe('merge keys', () => {
+    // http://blogs.perl.org/users/tinita/2019/05/reusing-data-with-yaml-anchors-aliases-and-merge-keys.html
+    test('handles plain map value', () => {
+      const result = parseWithPointers(
+        `---
+- &CENTER { x: 1, y: 2 }
+- &LEFT { x: 0, y: 2 }
+- &BIG { r: 10 }
+- &SMALL { r: 1 }
 
+- # Merge one map
+  << : *CENTER
+  r: 10
+  label: center/big`,
+        { mergeKeys: true }
+      );
+
+      expect(result.data[4]).toEqual({
+        x: 1,
+        y: 2,
+        r: 10,
+        label: 'center/big',
+      });
+    });
+
+    test('handles sequence of maps', () => {
+      const result = parseWithPointers(
+        `---
+- &CENTER { x: 1, y: 2 }
+- &LEFT { x: 0, y: 2 }
+- &BIG { r: 10 }
+- &SMALL { r: 1 }
+
+- # Merge multiple maps
+  << : [ *CENTER, *BIG ]
+  label: center/big`,
+        { mergeKeys: true }
+      );
+
+      expect(result.data[4]).toEqual({
+        x: 1,
+        y: 2,
+        r: 10,
+        label: 'center/big',
+      });
+    });
+
+    test('handles sequence of maps', () => {
+      const result = parseWithPointers(
+        `---
+- &CENTER { x: 1, y: 2 }
+- &LEFT { x: 0, y: 2 }
+- &BIG { r: 10 }
+- &SMALL { r: 1 }
+
+- # Merge multiple maps
+  << : [ *CENTER, *BIG ]
+  label: center/big`,
+        { mergeKeys: true }
+      );
+
+      expect(result.data[4]).toEqual({
+        x: 1,
+        y: 2,
+        r: 10,
+        label: 'center/big',
+      });
+    });
+
+    test('handles overrides', () => {
+      const result = parseWithPointers(
+        `---
+- &CENTER { x: 1, y: 2 }
+- &LEFT { x: 0, y: 2 }
+- &BIG { r: 10 }
+- &SMALL { r: 1 }
+
+- # Override
+  << : [ *BIG, *LEFT, *SMALL ]
+  x: 1
+  label: center/big`,
+        { mergeKeys: true }
+      );
+
+      expect(result.data[4]).toEqual({
+        x: 1,
+        y: 2,
+        r: 10,
+        label: 'center/big',
+      });
+    });
   });
 });

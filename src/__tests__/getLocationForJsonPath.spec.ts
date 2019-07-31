@@ -100,6 +100,67 @@ describe('getLocationForJsonPath', () => {
     });
   });
 
+  describe('duplicate keys fixture', () => {
+    const result = parseWithPointers(
+      `foo: 2
+foo: 4`
+    );
+
+    test.each`
+      start     | end       | path
+      ${[1, 5]} | ${[1, 6]} | ${['foo']}
+    `('should return proper location for given JSONPath $path', ({ start, end, path }) => {
+      expect(getLocationForJsonPath(result, path)).toEqual({
+        range: {
+          start: {
+            character: start[1],
+            line: start[0],
+          },
+          end: {
+            character: end[1],
+            line: end[0],
+          },
+        },
+      });
+    });
+  });
+
+  describe('merge keys with overrides fixture', () => {
+    const result = parseWithPointers(
+      `---
+- &CENTER { x: 1, y: 2 }
+- &LEFT { x: 0, y: 2 }
+- &BIG { r: 10 }
+- &SMALL { r: 1 }
+
+- # Override
+  << : [ *BIG, *LEFT, *SMALL ]
+  x: 1
+  label: center/big`,
+      { mergeKeys: true }
+    );
+
+    test.each`
+      start      | end        | path
+      ${[2, 19]} | ${[2, 20]} | ${[4, 'y']}
+      ${[3, 12]} | ${[3, 14]} | ${[4, 'r']}
+      ${[8, 5]}  | ${[8, 6]}  | ${[4, 'x']}
+    `('should return proper location for given JSONPath $path', ({ start, end, path }) => {
+      expect(getLocationForJsonPath(result, path)).toEqual({
+        range: {
+          start: {
+            character: start[1],
+            line: start[0],
+          },
+          end: {
+            character: end[1],
+            line: end[0],
+          },
+        },
+      });
+    });
+  });
+
   describe('spectral bug #170 fixture', () => {
     const result = parseWithPointers(spectral170);
 

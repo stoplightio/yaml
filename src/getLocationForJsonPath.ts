@@ -1,8 +1,10 @@
 import { GetLocationForJsonPath, ILocation, JsonPath } from '@stoplight/types';
 import { Kind, YAMLAnchorReference, YAMLNode, YAMLSequence } from 'yaml-ast-parser';
 import { YAMLMapping } from 'yaml-ast-parser/src/yamlAST';
+import { SpecialMappingKeys } from './consts';
 import { lineForPosition } from './lineForPosition';
 import { YamlParserResult } from './types';
+import { isValidNode } from './utils';
 
 export const getLocationForJsonPath: GetLocationForJsonPath<YamlParserResult<object>> = (
   { ast, lineMap, metadata },
@@ -76,7 +78,6 @@ function findNodeAtPath(
   pathLoop: for (const segment of path) {
     switch (node && node.kind) {
       case Kind.MAP:
-        // todo: test dupes
         const mappings = getMappings(node.mappings, mergeKeys);
         for (let i = mappings.length - 1; i >= 0; i--) {
           const item = mappings[i];
@@ -110,13 +111,14 @@ function findNodeAtPath(
 
 function getMappings(mappings: YAMLMapping[], mergeKeys: boolean): YAMLMapping[] {
   if (!mergeKeys) return mappings;
-  // todo: dupes?
 
   return mappings.reduce<YAMLMapping[]>((mergedMappings, mapping) => {
-    if (mapping && mapping.key.value === '<<') {
-      mergedMappings.push(...reduceMergeKeys((mapping as YAMLMapping).value as YAMLNode));
-    } else {
-      mergedMappings.push(mapping);
+    if (isValidNode(mapping as YAMLNode)) {
+      if (mapping.key.value === SpecialMappingKeys.MergeKey) {
+        mergedMappings.push(...reduceMergeKeys((mapping as YAMLMapping).value as YAMLNode));
+      } else {
+        mergedMappings.push(mapping);
+      }
     }
 
     return mergedMappings;
@@ -126,7 +128,7 @@ function getMappings(mappings: YAMLMapping[], mergeKeys: boolean): YAMLMapping[]
 function reduceMergeKeys(node: YAMLNode): YAMLMapping[] {
   switch (node.kind) {
     case Kind.SEQ:
-      return (node as YAMLSequence).items.reduce<YAMLMapping[]>((items, item) => {
+      return (node as YAMLSequence).items.reduceRight<YAMLMapping[]>((items, item) => {
         items.push(...reduceMergeKeys(item));
         return items;
       }, []);

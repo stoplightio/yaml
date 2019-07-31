@@ -222,7 +222,8 @@ const transformDuplicatedMappingKeys = (nodes: YAMLNode[], lineMap: number[]): I
 
 const reduceMergeKeys = (items: unknown): object | null => {
   if (Array.isArray(items)) {
-    return items.reduce((merged, item) => Object.assign(merged, item), {});
+    // reduceRight is on purpose here!
+    return items.reduceRight((merged, item) => Object.assign(merged, item), {});
   }
 
   return typeof items !== 'object' || items === null ? null : Object(items);

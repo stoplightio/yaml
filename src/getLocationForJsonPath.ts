@@ -1,6 +1,5 @@
 import { GetLocationForJsonPath, ILocation, JsonPath } from '@stoplight/types';
-import { Kind, YAMLNode, YAMLSequence } from 'yaml-ast-parser';
-import { YAMLMapping } from 'yaml-ast-parser/src/yamlAST';
+import { Kind, YAMLMapping, YAMLNode, YAMLSequence } from 'yaml-ast-parser';
 import { SpecialMappingKeys } from './consts';
 import { lineForPosition } from './lineForPosition';
 import { YamlParserResult } from './types';
@@ -85,9 +84,9 @@ function findNodeAtPath(
           const item = mappings[i];
           if (item.key.value === segment) {
             if (item.value === null) {
-              node = item.key as YAMLNode;
+              node = item.key;
             } else {
-              node = item.value as YAMLNode;
+              node = item.value;
             }
             continue pathLoop;
           }
@@ -117,7 +116,7 @@ function getMappings(mappings: YAMLMapping[], mergeKeys: boolean): YAMLMapping[]
   return mappings.reduce<YAMLMapping[]>((mergedMappings, mapping) => {
     if (isObject(mapping)) {
       if (mapping.key.value === SpecialMappingKeys.MergeKey) {
-        mergedMappings.push(...reduceMergeKeys((mapping as YAMLMapping).value as YAMLNode));
+        mergedMappings.push(...reduceMergeKeys((mapping as YAMLMapping).value));
       } else {
         mergedMappings.push(mapping);
       }

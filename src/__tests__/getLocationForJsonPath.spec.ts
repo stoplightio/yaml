@@ -8,6 +8,7 @@ const spectral170 = fs.readFileSync(join(__dirname, './fixtures/spectral-170.yam
 const spectralCRLF = fs.readFileSync(join(__dirname, './fixtures/spectral-crlf.yaml'), 'utf-8');
 const spectralLF = fs.readFileSync(join(__dirname, './fixtures/spectral-lf.yaml'), 'utf-8');
 const mergeKeys = fs.readFileSync(join(__dirname, './fixtures/merge-keys.yaml'), 'utf-8');
+const duplicateMergeKeys = fs.readFileSync(join(__dirname, './fixtures/duplicate-merge-keys.yaml'), 'utf-8');
 const simple = `hello: world
 address:
   street: 123`;
@@ -109,6 +110,32 @@ foo: 4`
     test.each`
       start     | end       | path
       ${[1, 5]} | ${[1, 6]} | ${['foo']}
+    `('should return proper location for given JSONPath $path', ({ start, end, path }) => {
+      expect(getLocationForJsonPath(result, path)).toEqual({
+        range: {
+          start: {
+            character: start[1],
+            line: start[0],
+          },
+          end: {
+            character: end[1],
+            line: end[0],
+          },
+        },
+      });
+    });
+  });
+
+  describe('duplicate merge keys fixture', () => {
+    const result = parseWithPointers(duplicateMergeKeys, { mergeKeys: true });
+
+    test.each`
+      start      | end        | path
+      ${[2, 8]}  | ${[2, 9]}  | ${['x']}
+      ${[2, 14]} | ${[2, 15]} | ${['y']}
+      ${[3, 5]}  | ${[3, 8]}  | ${['foo']}
+      ${[4, 8]}  | ${[4, 9]}  | ${['z']}
+      ${[4, 14]} | ${[4, 15]} | ${['t']}
     `('should return proper location for given JSONPath $path', ({ start, end, path }) => {
       expect(getLocationForJsonPath(result, path)).toEqual({
         range: {

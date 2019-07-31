@@ -6,6 +6,7 @@ import * as HugeJSON from './fixtures/huge-json.json';
 import { HugeYAML } from './fixtures/huge-yaml';
 
 const diverse = fs.readFileSync(path.join(__dirname, './fixtures/diverse.yaml'), 'utf-8');
+const duplicateMergeKeys = fs.readFileSync(path.join(__dirname, './fixtures/duplicate-merge-keys.yaml'), 'utf-8');
 
 describe('yaml parser', () => {
   test.each(['test', 1])('parse scalar $s', val => {
@@ -407,6 +408,19 @@ european-cities: &cities
         y: 2,
         r: 10,
         label: 'center/big',
+      });
+    });
+
+    test('handles duplicate merge keys', () => {
+      const result = parseWithPointers(duplicateMergeKeys, { mergeKeys: true });
+
+      // https://github.com/nodeca/js-yaml/blob/master/test/samples-common/duplicate-merge-key.js
+      expect(result.data).toEqual({
+        x: 1,
+        y: 2,
+        foo: 'bar',
+        z: 3,
+        t: 4,
       });
     });
   });

@@ -18,9 +18,9 @@ yarn add @stoplight/yaml
 
 ### Usage
 
-- **[getJsonPathForPosition](https://stoplightio.github.io/yaml/globals.html#getjsonpathforposition)**: Computes JSON path for given position.
-- **[getLocationForJsonPath](https://stoplightio.github.io/yaml/globals.html#getlocationforjsonpath)**: Retrieves location of node matching given JSON path.
-- **[parseWithPointers](https://stoplightio.github.io/yaml/globals.html#parsewithpointers)**: Parses YAML into JSON and also returns diagnostics as well as full ast with line information.
+- **[getJsonPathForPosition](./src/getJsonPathForPosition.ts)**: Computes JSON path for given position.
+- **[getLocationForJsonPath](./src/getLocationForJsonPath.ts)**: Retrieves location of node matching given JSON path.
+- **[parseWithPointers](./src/parseWithPointers.ts)**: Parses YAML into JSON and also returns diagnostics as well as full ast with line information.
 
 ```ts
 // basic example of parseWithPointers

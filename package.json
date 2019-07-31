@@ -27,7 +27,6 @@
   },
   "scripts": {
     "build": "sl-scripts build",
-    "build.docs": "sl-scripts build:typedoc",
     "commit": "git-cz",
     "lint": "tslint -c tslint.json 'src/**/*.ts'",
     "lint.fix": "yarn lint --fix",

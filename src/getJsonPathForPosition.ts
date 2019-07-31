@@ -1,9 +1,10 @@
 import { GetJsonPathForPosition } from '@stoplight/types';
-import { Kind, YamlMap, YAMLMapping, YAMLNode, YAMLSequence } from 'yaml-ast-parser';
+import { Kind, YAMLMapping, YAMLNode, YAMLSequence } from 'yaml-ast-parser';
 import { buildJsonPath } from './buildJsonPath';
-import { isValidNode } from './utils';
+import { YamlParserResult } from './types';
+import { isObject } from './utils';
 
-export const getJsonPathForPosition: GetJsonPathForPosition<YAMLNode, number[]> = (
+export const getJsonPathForPosition: GetJsonPathForPosition<YamlParserResult<unknown>> = (
   { ast, lineMap },
   { line, character }
 ) => {
@@ -24,9 +25,9 @@ export const getJsonPathForPosition: GetJsonPathForPosition<YAMLNode, number[]> 
 function* walk(node: YAMLNode): IterableIterator<YAMLNode> {
   switch (node.kind) {
     case Kind.MAP:
-      if ((node as YamlMap).mappings.length !== 0) {
-        for (const mapping of (node as YamlMap).mappings) {
-          if (isValidNode(mapping)) {
+      if (node.mappings.length !== 0) {
+        for (const mapping of node.mappings) {
+          if (isObject(mapping)) {
             yield mapping;
           }
         }
@@ -34,11 +35,11 @@ function* walk(node: YAMLNode): IterableIterator<YAMLNode> {
 
       break;
     case Kind.MAPPING:
-      if (isValidNode((node as YAMLMapping).key)) {
+      if (isObject(node.key)) {
         yield (node as YAMLMapping).key;
       }
 
-      if (isValidNode((node as YAMLMapping).value)) {
+      if (isObject(node.value)) {
         yield (node as YAMLMapping).value;
       }
 
@@ -46,7 +47,7 @@ function* walk(node: YAMLNode): IterableIterator<YAMLNode> {
     case Kind.SEQ:
       if ((node as YAMLSequence).items.length !== 0) {
         for (const item of (node as YAMLSequence).items) {
-          if (isValidNode(item)) {
+          if (isObject(item)) {
             yield item;
           }
         }

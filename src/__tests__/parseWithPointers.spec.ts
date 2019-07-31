@@ -6,6 +6,7 @@ import * as HugeJSON from './fixtures/huge-json.json';
 import { HugeYAML } from './fixtures/huge-yaml';
 
 const diverse = fs.readFileSync(path.join(__dirname, './fixtures/diverse.yaml'), 'utf-8');
+const duplicateMergeKeys = fs.readFileSync(path.join(__dirname, './fixtures/duplicate-merge-keys.yaml'), 'utf-8');
 
 describe('yaml parser', () => {
   test.each(['test', 1])('parse scalar $s', val => {
@@ -236,29 +237,42 @@ european-cities: &cities
     });
   });
 
-  test('reports duplicated properties', () => {
-    expect(parseWithPointers('foo: 0\nfoo: 0\n', { ignoreDuplicateKeys: false })).toHaveProperty('diagnostics', [
-      {
-        code: 'YAMLException',
-        message: 'duplicate key',
-        path: ['foo'],
-        range: {
-          start: {
-            line: 1,
-            character: 0,
-          },
-          end: {
-            line: 1,
-            character: 3,
-          },
-        },
-        severity: DiagnosticSeverity.Error,
-      },
-    ]);
+  describe('duplicate keys', () => {
+    test('has JSON-ish approach to duplicate keys', () => {
+      expect(parseWithPointers('foo: 0\nfoo: 1\n').data).toEqual({
+        foo: 1,
+      });
+    });
 
-    expect(
-      parseWithPointers(
-        `baz:
+    test('throws when duplicate key is encountered and not in JSON-ish mode', () => {
+      expect(parseWithPointers.bind(null, 'foo: 0\nfoo: 1\n', { json: false })).toThrow(
+        'Duplicate YAML mapping key encountered'
+      );
+    });
+
+    test('reports duplicate keys', () => {
+      expect(parseWithPointers('foo: 0\nfoo: 0\n', { ignoreDuplicateKeys: false })).toHaveProperty('diagnostics', [
+        {
+          code: 'YAMLException',
+          message: 'duplicate key',
+          path: ['foo'],
+          range: {
+            start: {
+              line: 1,
+              character: 0,
+            },
+            end: {
+              line: 1,
+              character: 3,
+            },
+          },
+          severity: DiagnosticSeverity.Error,
+        },
+      ]);
+
+      expect(
+        parseWithPointers(
+          `baz:
   duplicated: 2
   baz: 3
   duplicated: boo
@@ -266,41 +280,148 @@ european-cities: &cities
     - yes
     - unfortunately, I am a dupe.
 `,
-        { ignoreDuplicateKeys: false }
-      )
-    ).toHaveProperty('diagnostics', [
-      {
-        code: 'YAMLException',
-        message: 'duplicate key',
-        path: ['baz', 'duplicated'],
-        range: {
-          start: {
-            line: 3,
-            character: 2,
+          { ignoreDuplicateKeys: false }
+        )
+      ).toHaveProperty('diagnostics', [
+        {
+          code: 'YAMLException',
+          message: 'duplicate key',
+          path: ['baz', 'duplicated'],
+          range: {
+            start: {
+              line: 3,
+              character: 2,
+            },
+            end: {
+              line: 3,
+              character: 12,
+            },
           },
-          end: {
-            line: 3,
-            character: 12,
-          },
+          severity: DiagnosticSeverity.Error,
         },
-        severity: DiagnosticSeverity.Error,
-      },
-      {
-        code: 'YAMLException',
-        message: 'duplicate key',
-        path: ['baz', 'duplicated'],
-        range: {
-          start: {
-            line: 4,
-            character: 2,
+        {
+          code: 'YAMLException',
+          message: 'duplicate key',
+          path: ['baz', 'duplicated'],
+          range: {
+            start: {
+              line: 4,
+              character: 2,
+            },
+            end: {
+              line: 4,
+              character: 12,
+            },
           },
-          end: {
-            line: 4,
-            character: 12,
-          },
+          severity: DiagnosticSeverity.Error,
         },
-        severity: DiagnosticSeverity.Error,
-      },
-    ]);
+      ]);
+    });
+  });
+
+  describe('merge keys', () => {
+    // http://blogs.perl.org/users/tinita/2019/05/reusing-data-with-yaml-anchors-aliases-and-merge-keys.html
+    test('handles plain map value', () => {
+      const result = parseWithPointers<any[]>(
+        `---
+- &CENTER { x: 1, y: 2 }
+- &LEFT { x: 0, y: 2 }
+- &BIG { r: 10 }
+- &SMALL { r: 1 }
+
+- # Merge one map
+  << : *CENTER
+  r: 10
+  label: center/big`,
+        { mergeKeys: true }
+      );
+
+      expect(result.data![4]).toEqual({
+        x: 1,
+        y: 2,
+        r: 10,
+        label: 'center/big',
+      });
+    });
+
+    test('handles sequence of maps', () => {
+      const result = parseWithPointers<any[]>(
+        `---
+- &CENTER { x: 1, y: 2 }
+- &LEFT { x: 0, y: 2 }
+- &BIG { r: 10 }
+- &SMALL { r: 1 }
+
+- # Merge multiple maps
+  << : [ *CENTER, *BIG ]
+  label: center/big`,
+        { mergeKeys: true }
+      );
+
+      expect(result.data![4]).toEqual({
+        x: 1,
+        y: 2,
+        r: 10,
+        label: 'center/big',
+      });
+    });
+
+    test('handles sequence of maps', () => {
+      const result = parseWithPointers<any[]>(
+        `---
+- &CENTER { x: 1, y: 2 }
+- &LEFT { x: 0, y: 2 }
+- &BIG { r: 10 }
+- &SMALL { r: 1 }
+
+- # Merge multiple maps
+  << : [ *CENTER, *BIG ]
+  label: center/big`,
+        { mergeKeys: true }
+      );
+
+      expect(result.data![4]).toEqual({
+        x: 1,
+        y: 2,
+        r: 10,
+        label: 'center/big',
+      });
+    });
+
+    test('handles overrides', () => {
+      const result = parseWithPointers<any[]>(
+        `---
+- &CENTER { x: 1, y: 2 }
+- &LEFT { x: 0, y: 2 }
+- &BIG { r: 10 }
+- &SMALL { r: 1 }
+
+- # Override
+  << : [ *BIG, *LEFT, *SMALL ]
+  x: 1
+  label: center/big`,
+        { mergeKeys: true }
+      );
+
+      expect(result.data![4]).toEqual({
+        x: 1,
+        y: 2,
+        r: 10,
+        label: 'center/big',
+      });
+    });
+
+    test('handles duplicate merge keys', () => {
+      const result = parseWithPointers(duplicateMergeKeys, { mergeKeys: true });
+
+      // https://github.com/nodeca/js-yaml/blob/master/test/samples-common/duplicate-merge-key.js
+      expect(result.data).toEqual({
+        x: 1,
+        y: 2,
+        foo: 'bar',
+        z: 3,
+        t: 4,
+      });
+    });
   });
 });

@@ -7,6 +7,8 @@ const petStore = fs.readFileSync(join(__dirname, './fixtures/petstore.oas2.yaml'
 const spectral170 = fs.readFileSync(join(__dirname, './fixtures/spectral-170.yaml'), 'utf-8');
 const spectralCRLF = fs.readFileSync(join(__dirname, './fixtures/spectral-crlf.yaml'), 'utf-8');
 const spectralLF = fs.readFileSync(join(__dirname, './fixtures/spectral-lf.yaml'), 'utf-8');
+const spectralSpecMergeKeys = fs.readFileSync(join(__dirname, './fixtures/spectral-spec-merge-keys.yaml'), 'utf-8');
+const duplicateMergeKeys = fs.readFileSync(join(__dirname, './fixtures/duplicate-merge-keys.yaml'), 'utf-8');
 const simple = `hello: world
 address:
   street: 123`;
@@ -60,6 +62,116 @@ describe('getLocationForJsonPath', () => {
       ${[0, 7]}  | ${[0, 12]} | ${['hello']}
       ${[1, 8]}  | ${[2, 13]} | ${['address']}
       ${[2, 10]} | ${[2, 13]} | ${['address', 'street']}
+    `('should return proper location for given JSONPath $path', ({ start, end, path }) => {
+      expect(getLocationForJsonPath(result, path)).toEqual({
+        range: {
+          start: {
+            character: start[1],
+            line: start[0],
+          },
+          end: {
+            character: end[1],
+            line: end[0],
+          },
+        },
+      });
+    });
+  });
+
+  describe('merge keys fixture', () => {
+    const result = parseWithPointers(spectralSpecMergeKeys, { mergeKeys: true });
+
+    test.each`
+      start       | end         | path
+      ${[27, 23]} | ${[27, 39]} | ${['paths', '/pets', 'post', 'responses', 'default', 'description']}
+      ${[28, 18]} | ${[31, 50]} | ${['paths', '/pets', 'post', 'responses', 'default', 'content']}
+    `('should return proper location for given JSONPath $path', ({ start, end, path }) => {
+      expect(getLocationForJsonPath(result, path)).toEqual({
+        range: {
+          start: {
+            character: start[1],
+            line: start[0],
+          },
+          end: {
+            character: end[1],
+            line: end[0],
+          },
+        },
+      });
+    });
+  });
+
+  describe('duplicate keys fixture', () => {
+    const result = parseWithPointers(
+      `foo: 2
+foo: 4`
+    );
+
+    test.each`
+      start     | end       | path
+      ${[1, 5]} | ${[1, 6]} | ${['foo']}
+    `('should return proper location for given JSONPath $path', ({ start, end, path }) => {
+      expect(getLocationForJsonPath(result, path)).toEqual({
+        range: {
+          start: {
+            character: start[1],
+            line: start[0],
+          },
+          end: {
+            character: end[1],
+            line: end[0],
+          },
+        },
+      });
+    });
+  });
+
+  describe('duplicate merge keys fixture', () => {
+    const result = parseWithPointers(duplicateMergeKeys, { mergeKeys: true });
+
+    test.each`
+      start      | end        | path
+      ${[2, 8]}  | ${[2, 9]}  | ${['x']}
+      ${[2, 14]} | ${[2, 15]} | ${['y']}
+      ${[3, 5]}  | ${[3, 8]}  | ${['foo']}
+      ${[4, 8]}  | ${[4, 9]}  | ${['z']}
+      ${[4, 14]} | ${[4, 15]} | ${['t']}
+    `('should return proper location for given JSONPath $path', ({ start, end, path }) => {
+      expect(getLocationForJsonPath(result, path)).toEqual({
+        range: {
+          start: {
+            character: start[1],
+            line: start[0],
+          },
+          end: {
+            character: end[1],
+            line: end[0],
+          },
+        },
+      });
+    });
+  });
+
+  describe('merge keys with overrides fixture', () => {
+    const result = parseWithPointers(
+      `---
+- &CENTER { x: 1, y: 2 }
+- &LEFT { x: 0, y: 2 }
+- &BIG { r: 10 }
+- &SMALL { r: 1 }
+
+- # Override
+  << : [ *BIG, *LEFT, *SMALL ]
+  x: 1
+  label: center/big`,
+      { mergeKeys: true }
+    );
+
+    test.each`
+      start      | end        | path
+      ${[2, 19]} | ${[2, 20]} | ${[4, 'y']}
+      ${[3, 12]} | ${[3, 14]} | ${[4, 'r']}
+      ${[8, 5]}  | ${[8, 6]}  | ${[4, 'x']}
     `('should return proper location for given JSONPath $path', ({ start, end, path }) => {
       expect(getLocationForJsonPath(result, path)).toEqual({
         range: {

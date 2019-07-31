@@ -2,7 +2,6 @@ import { DiagnosticSeverity, IDiagnostic } from '@stoplight/types';
 import {
   Kind,
   load as loadAST,
-  LoadOptions,
   YAMLAnchorReference,
   YAMLException,
   YamlMap,
@@ -10,21 +9,23 @@ import {
   YAMLSequence,
 } from 'yaml-ast-parser';
 import { buildJsonPath } from './buildJsonPath';
+import { SpecialMappingKeys } from './consts';
 import { lineForPosition } from './lineForPosition';
-import { YamlParserResult } from './types';
+import { IParseOptions, YamlParserResult } from './types';
 
-export const parseWithPointers = <T>(value: string, options?: LoadOptions): YamlParserResult<T> => {
+export const parseWithPointers = <T>(value: string, options?: IParseOptions): YamlParserResult<T | undefined> => {
   const lineMap = computeLineMap(value);
   const ast = loadAST(value, {
     ...options,
     ignoreDuplicateKeys: true,
   });
 
-  const parsed: YamlParserResult<T> = {
+  const parsed: YamlParserResult<T | undefined> = {
     ast,
     lineMap,
-    data: {} as T, // fixme: we most likely should have undefined here, but this might be breaking
+    data: undefined,
     diagnostics: [],
+    metadata: options,
   };
 
   if (!ast) return parsed;
@@ -33,6 +34,7 @@ export const parseWithPointers = <T>(value: string, options?: LoadOptions): Yaml
 
   parsed.data = walkAST(
     ast,
+    options,
     options !== undefined && options.ignoreDuplicateKeys === false ? duplicatedMappingKeys : undefined
   ) as T;
 
@@ -51,7 +53,11 @@ export const parseWithPointers = <T>(value: string, options?: LoadOptions): Yaml
   return parsed;
 };
 
-export const walkAST = (node: YAMLNode | null, duplicatedMappingKeys?: YAMLNode[]): unknown => {
+export const walkAST = (
+  node: YAMLNode | null,
+  options?: IParseOptions,
+  duplicatedMappingKeys?: YAMLNode[]
+): unknown => {
   if (node) {
     switch (node.kind) {
       case Kind.MAP: {
@@ -59,17 +65,28 @@ export const walkAST = (node: YAMLNode | null, duplicatedMappingKeys?: YAMLNode[
         // note, we don't handle null aka '~' keys on purpose
         for (const mapping of (node as YamlMap).mappings) {
           // typing is broken, value might be null
-          if (duplicatedMappingKeys !== undefined && mapping.key.value in container) {
-            duplicatedMappingKeys.push(mapping.key);
+          if (mapping.key.value in container) {
+            if (options !== void 0 && options.json === false) {
+              throw new Error('Duplicate YAML mapping key encountered');
+            }
+
+            if (duplicatedMappingKeys !== void 0) {
+              duplicatedMappingKeys.push(mapping.key);
+            }
           }
 
-          container[mapping.key.value] = walkAST(mapping.value, duplicatedMappingKeys);
+          // https://yaml.org/type/merge.html merge keys, not a part of YAML spec
+          if (options !== void 0 && options.mergeKeys === true && mapping.key.value === SpecialMappingKeys.MergeKey) {
+            Object.assign(container, reduceMergeKeys(walkAST(mapping.value, options, duplicatedMappingKeys)));
+          } else {
+            container[mapping.key.value] = walkAST(mapping.value, options, duplicatedMappingKeys);
+          }
         }
 
         return container;
       }
       case Kind.SEQ:
-        return (node as YAMLSequence).items.map(item => walkAST(item, duplicatedMappingKeys));
+        return (node as YAMLSequence).items.map(item => walkAST(item, options, duplicatedMappingKeys));
       case Kind.SCALAR:
         return 'valueObject' in node ? node.valueObject : node.value;
       case Kind.ANCHOR_REF:
@@ -77,7 +94,7 @@ export const walkAST = (node: YAMLNode | null, duplicatedMappingKeys?: YAMLNode[
           node.value = dereferenceAnchor(node.value, (node as YAMLAnchorReference).referencesAnchor);
         }
 
-        return walkAST(node.value, duplicatedMappingKeys);
+        return walkAST(node.value, options, duplicatedMappingKeys);
       default:
         return null;
     }
@@ -201,4 +218,13 @@ const transformDuplicatedMappingKeys = (nodes: YAMLNode[], lineMap: number[]): I
   }
 
   return validations;
+};
+
+const reduceMergeKeys = (items: unknown): object | null => {
+  if (Array.isArray(items)) {
+    // reduceRight is on purpose here! We need to respect the order - the key cannot be overridden..
+    return items.reduceRight((merged, item) => Object.assign(merged, item), {});
+  }
+
+  return typeof items !== 'object' || items === null ? null : Object(items);
 };

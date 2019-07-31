@@ -27,27 +27,26 @@
   },
   "scripts": {
     "build": "sl-scripts build",
-    "build.docs": "sl-scripts build:typedoc",
     "commit": "git-cz",
-    "lint": "sl-scripts lint",
+    "lint": "tslint -c tslint.json 'src/**/*.ts'",
     "lint.fix": "yarn lint --fix",
     "release": "sl-scripts release",
     "release.docs": "sl-scripts release:docs",
     "release.dryRun": "sl-scripts release --dry-run --debug",
-    "test": "sl-scripts test",
+    "test": "jest",
     "test.prod": "yarn lint && yarn test --coverage --no-cache",
     "test.update": "yarn test --updateSnapshot",
     "test.watch": "yarn test --watch"
   },
   "dependencies": {
-    "@stoplight/types": "^9.1.2",
+    "@stoplight/types": "^10.0.1",
     "@types/js-yaml": "3.12.1",
-    "lodash": "^4.17.5",
+    "lodash": "^4.17.15",
     "yaml-ast-parser": "~0.0.43"
   },
   "devDependencies": {
     "@stoplight/scripts": "3.1.0",
-    "typescript": "3.5.2"
+    "typescript": "3.5.3"
   },
   "lint-staged": {
     "*.{ts,tsx}$": [

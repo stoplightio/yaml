@@ -1,13 +1,16 @@
 import { GetLocationForJsonPath, ILocation, JsonPath } from '@stoplight/types';
-import { Kind, YAMLNode, YAMLSequence } from 'yaml-ast-parser';
+import { Kind, YAMLMapping, YAMLNode, YAMLSequence } from 'yaml-ast-parser';
+import { SpecialMappingKeys } from './consts';
 import { lineForPosition } from './lineForPosition';
+import { YamlParserResult } from './types';
+import { isObject } from './utils';
 
-export const getLocationForJsonPath: GetLocationForJsonPath<YAMLNode, number[]> = (
-  { ast, lineMap },
+export const getLocationForJsonPath: GetLocationForJsonPath<YamlParserResult<unknown>> = (
+  { ast, lineMap, metadata },
   path,
   closest = false
 ) => {
-  const node = findNodeAtPath(ast, path, closest);
+  const node = findNodeAtPath(ast, path, { closest, mergeKeys: metadata !== undefined && metadata.mergeKeys === true });
   if (node === void 0) return;
 
   return getLoc(lineMap, {
@@ -66,11 +69,19 @@ function getEndPosition(node: YAMLNode): number {
   return node.endPosition;
 }
 
-function findNodeAtPath(node: YAMLNode, path: JsonPath, closest: boolean) {
+function findNodeAtPath(
+  node: YAMLNode,
+  path: JsonPath,
+  { closest, mergeKeys }: { closest: boolean; mergeKeys: boolean }
+) {
   pathLoop: for (const segment of path) {
     switch (node && node.kind) {
       case Kind.MAP:
-        for (const item of node.mappings) {
+        const mappings = getMappings(node.mappings, mergeKeys);
+        // we iterate from the last to first to be compliant with JSONish mode
+        // in other words, iterating from the last to first guarantees we choose the last node that might override other matching nodes
+        for (let i = mappings.length - 1; i >= 0; i--) {
+          const item = mappings[i];
           if (item.key.value === segment) {
             if (item.value === null) {
               node = item.key;
@@ -97,6 +108,38 @@ function findNodeAtPath(node: YAMLNode, path: JsonPath, closest: boolean) {
   }
 
   return node;
+}
+
+function getMappings(mappings: YAMLMapping[], mergeKeys: boolean): YAMLMapping[] {
+  if (!mergeKeys) return mappings;
+
+  return mappings.reduce<YAMLMapping[]>((mergedMappings, mapping) => {
+    if (isObject(mapping)) {
+      if (mapping.key.value === SpecialMappingKeys.MergeKey) {
+        mergedMappings.push(...reduceMergeKeys((mapping as YAMLMapping).value));
+      } else {
+        mergedMappings.push(mapping);
+      }
+    }
+
+    return mergedMappings;
+  }, []);
+}
+
+function reduceMergeKeys(node: YAMLNode): YAMLMapping[] {
+  switch (node.kind) {
+    case Kind.SEQ:
+      return (node as YAMLSequence).items.reduceRight<YAMLMapping[]>((items, item) => {
+        items.push(...reduceMergeKeys(item));
+        return items;
+      }, []);
+    case Kind.MAP:
+      return node.mappings;
+    case Kind.ANCHOR_REF:
+      return reduceMergeKeys(node.value);
+    default:
+      return [];
+  }
 }
 
 const getLoc = (lineMap: number[], { start = 0, end = 0 }): ILocation => {

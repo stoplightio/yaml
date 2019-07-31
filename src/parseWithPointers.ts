@@ -13,14 +13,14 @@ import { SpecialMappingKeys } from './consts';
 import { lineForPosition } from './lineForPosition';
 import { IParseOptions, YamlParserResult } from './types';
 
-export const parseWithPointers = <T>(value: string, options?: IParseOptions): YamlParserResult<T> => {
+export const parseWithPointers = <T>(value: string, options?: IParseOptions): YamlParserResult<T | undefined> => {
   const lineMap = computeLineMap(value);
   const ast = loadAST(value, {
     ...options,
     ignoreDuplicateKeys: true,
   });
 
-  const parsed: YamlParserResult<T> = {
+  const parsed: YamlParserResult<T | undefined> = {
     ast,
     lineMap,
     data: undefined,

@@ -6,7 +6,7 @@ import { lineForPosition } from './lineForPosition';
 import { YamlParserResult } from './types';
 import { isObject } from './utils';
 
-export const getLocationForJsonPath: GetLocationForJsonPath<YamlParserResult<object>> = (
+export const getLocationForJsonPath: GetLocationForJsonPath<YamlParserResult<unknown>> = (
   { ast, lineMap, metadata },
   path,
   closest = false

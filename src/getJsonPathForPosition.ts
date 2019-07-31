@@ -4,7 +4,7 @@ import { buildJsonPath } from './buildJsonPath';
 import { YamlParserResult } from './types';
 import { isObject } from './utils';
 
-export const getJsonPathForPosition: GetJsonPathForPosition<YamlParserResult<object>> = (
+export const getJsonPathForPosition: GetJsonPathForPosition<YamlParserResult<unknown>> = (
   { ast, lineMap },
   { line, character }
 ) => {

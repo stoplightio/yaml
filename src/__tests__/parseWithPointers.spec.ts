@@ -322,7 +322,7 @@ european-cities: &cities
   describe('merge keys', () => {
     // http://blogs.perl.org/users/tinita/2019/05/reusing-data-with-yaml-anchors-aliases-and-merge-keys.html
     test('handles plain map value', () => {
-      const result = parseWithPointers(
+      const result = parseWithPointers<any[]>(
         `---
 - &CENTER { x: 1, y: 2 }
 - &LEFT { x: 0, y: 2 }
@@ -336,7 +336,7 @@ european-cities: &cities
         { mergeKeys: true }
       );
 
-      expect(result.data[4]).toEqual({
+      expect(result.data![4]).toEqual({
         x: 1,
         y: 2,
         r: 10,
@@ -345,7 +345,7 @@ european-cities: &cities
     });
 
     test('handles sequence of maps', () => {
-      const result = parseWithPointers(
+      const result = parseWithPointers<any[]>(
         `---
 - &CENTER { x: 1, y: 2 }
 - &LEFT { x: 0, y: 2 }
@@ -358,7 +358,7 @@ european-cities: &cities
         { mergeKeys: true }
       );
 
-      expect(result.data[4]).toEqual({
+      expect(result.data![4]).toEqual({
         x: 1,
         y: 2,
         r: 10,
@@ -367,7 +367,7 @@ european-cities: &cities
     });
 
     test('handles sequence of maps', () => {
-      const result = parseWithPointers(
+      const result = parseWithPointers<any[]>(
         `---
 - &CENTER { x: 1, y: 2 }
 - &LEFT { x: 0, y: 2 }
@@ -380,7 +380,7 @@ european-cities: &cities
         { mergeKeys: true }
       );
 
-      expect(result.data[4]).toEqual({
+      expect(result.data![4]).toEqual({
         x: 1,
         y: 2,
         r: 10,
@@ -389,7 +389,7 @@ european-cities: &cities
     });
 
     test('handles overrides', () => {
-      const result = parseWithPointers(
+      const result = parseWithPointers<any[]>(
         `---
 - &CENTER { x: 1, y: 2 }
 - &LEFT { x: 0, y: 2 }
@@ -403,7 +403,7 @@ european-cities: &cities
         { mergeKeys: true }
       );
 
-      expect(result.data[4]).toEqual({
+      expect(result.data![4]).toEqual({
         x: 1,
         y: 2,
         r: 10,

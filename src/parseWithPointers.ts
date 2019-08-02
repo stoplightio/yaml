@@ -50,6 +50,10 @@ export const parseWithPointers = <T>(value: string, options?: IParseOptions): Ya
     parsed.diagnostics.sort((itemA, itemB) => itemA.range.start.line - itemB.range.start.line);
   }
 
+  if (Array.isArray(parsed.ast.errors)) {
+    parsed.ast.errors.length = 0;
+  }
+
   return parsed;
 };
 

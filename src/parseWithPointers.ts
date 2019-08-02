@@ -152,14 +152,16 @@ const dereferenceAnchor = (node: YAMLNode, anchorId: string): YAMLNode | YAMLNod
 
 // builds up the line map, for use by linesForPosition
 const computeLineMap = (input: string) => {
-  const lines = input.split(/\n/);
   const lineMap: number[] = [];
 
-  let sum = 0;
-  for (const line of lines) {
-    sum += line.length + 1;
-    lineMap.push(sum);
+  let i = 0;
+  for (; i < input.length; i++) {
+    if (input[i] === '\n') {
+      lineMap.push(i + 1);
+    }
   }
+
+  lineMap.push(i + 1);
 
   return lineMap;
 };

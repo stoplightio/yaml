@@ -39,7 +39,7 @@
     "test.watch": "yarn test --watch"
   },
   "dependencies": {
-    "@stoplight/types": "^10.0.1",
+    "@stoplight/types": "^11.0.0",
     "@types/js-yaml": "3.12.1",
     "lodash": "^4.17.15",
     "yaml-ast-parser": "~0.0.43"

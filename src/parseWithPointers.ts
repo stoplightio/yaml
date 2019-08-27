@@ -1,11 +1,17 @@
 import { DiagnosticSeverity, IDiagnostic } from '@stoplight/types';
 import {
+  determineScalarType,
   Kind,
   load as loadAST,
+  parseYamlBoolean,
+  parseYamlFloat,
+  parseYamlInteger,
+  ScalarType,
   YAMLAnchorReference,
   YAMLException,
   YamlMap,
   YAMLNode,
+  YAMLScalar,
   YAMLSequence,
 } from 'yaml-ast-parser';
 import { buildJsonPath } from './buildJsonPath';
@@ -88,7 +94,7 @@ export const walkAST = (
       case Kind.SEQ:
         return (node as YAMLSequence).items.map(item => walkAST(item, options, duplicatedMappingKeys));
       case Kind.SCALAR:
-        return 'valueObject' in node ? node.valueObject : node.value;
+        return getScalarValue(node as YAMLScalar);
       case Kind.ANCHOR_REF:
         if (node.value !== void 0 && isCircularAnchorRef(node as YAMLAnchorReference)) {
           node.value = dereferenceAnchor(node.value, (node as YAMLAnchorReference).referencesAnchor);
@@ -145,6 +151,21 @@ const dereferenceAnchor = (node: YAMLNode, anchorId: string): YAMLNode | YAMLNod
       return node;
   }
 };
+
+function getScalarValue(node: YAMLScalar): number | null | boolean | string | void {
+  switch (determineScalarType(node)) {
+    case ScalarType.null:
+      return null;
+    case ScalarType.string:
+      return String(node.value);
+    case ScalarType.bool:
+      return parseYamlBoolean(node.value);
+    case ScalarType.int:
+      return parseYamlInteger(node.value);
+    case ScalarType.float:
+      return parseYamlFloat(node.value);
+  }
+}
 
 // builds up the line map, for use by linesForPosition
 const computeLineMap = (input: string) => {

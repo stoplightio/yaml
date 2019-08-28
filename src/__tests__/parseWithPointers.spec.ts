@@ -7,6 +7,7 @@ import { HugeYAML } from './fixtures/huge-yaml';
 
 const diverse = fs.readFileSync(path.join(__dirname, './fixtures/diverse.yaml'), 'utf-8');
 const duplicateMergeKeys = fs.readFileSync(path.join(__dirname, './fixtures/duplicate-merge-keys.yaml'), 'utf-8');
+const spectral481 = fs.readFileSync(path.join(__dirname, './fixtures/spectral-481.yaml'), 'utf-8');
 
 describe('yaml parser', () => {
   test.each(['test', 1])('parse scalar $s', val => {
@@ -27,6 +28,22 @@ describe('yaml parser', () => {
   test('parse huge', () => {
     const result = parseWithPointers(HugeYAML);
     expect(result.data).toEqual(HugeJSON);
+  });
+
+  it('parses string according to YAML 1.2 spec', () => {
+    const { data } = parseWithPointers(spectral481);
+    expect(data).toHaveProperty(
+      'components.schemas.RandomRequest.properties.implicit_string_date.example',
+      '2012-10-12'
+    );
+    expect(data).toHaveProperty(
+      'components.schemas.RandomRequest.properties.another_implicit_string_date.example',
+      'x20121012'
+    );
+    expect(data).toHaveProperty(
+      'components.schemas.RandomRequest.properties.explicit_string_date.example',
+      '2012-10-12'
+    );
   });
 
   describe('report errors', () => {

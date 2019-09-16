@@ -80,7 +80,6 @@ export const walkAST = (
         for (const mapping of (node as YamlMap).mappings) {
           const key = mapping.key.value;
 
-          // todo: lookup the spec and see how duplicate merge keys shall be handled
           if (handleDuplicates && (!handleMergeKeys || key !== SpecialMappingKeys.MergeKey)) {
             if (seenKeys.includes(mapping.key.value)) {
               if (options !== void 0 && options.json === false) {

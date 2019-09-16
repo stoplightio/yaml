@@ -432,6 +432,56 @@ european-cities: &cities
       });
     });
 
+    test('handles overrides #2', () => {
+      const result = parseWithPointers(mergeKeysWithDuplicateProperties, {
+        mergeKeys: true,
+        ignoreDuplicateKeys: false,
+      });
+
+      expect(result.data).toEqual({
+        openapi: '3.0.0',
+        'x-format-version': '1.0',
+        info: {
+          description: 'https://yaml.org/type/merge.html',
+          title: 'Merge key issue',
+          version: '1.0.0',
+        },
+        'x-center': {
+          x: 1,
+          y: 2,
+        },
+        'x-left': {
+          x: 0,
+          y: 2,
+        },
+        'x-big': {
+          r: 10,
+        },
+        'x-small': {
+          r: 1,
+        },
+        'x-one': {
+          x: 1,
+          y: 2,
+          r: 10,
+          label: 'center/big',
+        },
+        'x-two': {
+          x: 1,
+          y: 2,
+          r: 10,
+          label: 'center/big',
+        },
+        'x-three': {
+          x: 1,
+          y: 2,
+          r: 10,
+          label: 'center/big',
+        },
+        paths: {},
+      });
+    });
+
     test('handles duplicate merge keys', () => {
       const result = parseWithPointers(duplicateMergeKeys, { mergeKeys: true });
 
@@ -443,6 +493,15 @@ european-cities: &cities
         z: 3,
         t: 4,
       });
+    });
+
+    test('does not report duplicate merge keys', () => {
+      const result = parseWithPointers(duplicateMergeKeys, {
+        mergeKeys: true,
+        ignoreDuplicateKeys: false,
+      });
+
+      expect(result.diagnostics).toEqual([]);
     });
 
     test('does not report duplicate errors for merged keys', () => {

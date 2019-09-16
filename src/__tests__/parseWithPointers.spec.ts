@@ -7,6 +7,10 @@ import { HugeYAML } from './fixtures/huge-yaml';
 
 const diverse = fs.readFileSync(path.join(__dirname, './fixtures/diverse.yaml'), 'utf-8');
 const duplicateMergeKeys = fs.readFileSync(path.join(__dirname, './fixtures/duplicate-merge-keys.yaml'), 'utf-8');
+const mergeKeysWithDuplicateProperties = fs.readFileSync(
+  path.join(__dirname, './fixtures/merge-keys-with-duplicate-props.yaml'),
+  'utf-8'
+);
 const spectral481 = fs.readFileSync(path.join(__dirname, './fixtures/spectral-481.yaml'), 'utf-8');
 
 describe('yaml parser', () => {
@@ -439,6 +443,15 @@ european-cities: &cities
         z: 3,
         t: 4,
       });
+    });
+
+    test('does not report duplicate errors for merged keys', () => {
+      const result = parseWithPointers(mergeKeysWithDuplicateProperties, {
+        mergeKeys: true,
+        ignoreDuplicateKeys: false,
+      });
+
+      expect(result.diagnostics).toEqual([]);
     });
   });
 });

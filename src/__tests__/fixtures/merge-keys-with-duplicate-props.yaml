@@ -1,0 +1,36 @@
+openapi: 3.0.0
+
+x-format-version: "1.0"
+
+info:
+  title: Merge key issue
+  description: https://yaml.org/type/merge.html
+  version: 1.0.0
+
+x-center: &CENTER
+  x: 1
+  y: 2
+
+x-left: &LEFT
+  x: 0
+  y: 2
+
+x-big: &BIG
+  r: 10
+
+x-small: &SMALL
+  r: 1
+
+x-one:
+  <<: *CENTER
+  r: 10
+  label: center/big
+x-two:
+  <<: [*CENTER, *BIG]
+  label: center/big
+x-three:
+  <<: [*BIG, *LEFT, *SMALL]
+  x: 1
+  label: center/big
+
+paths: {}

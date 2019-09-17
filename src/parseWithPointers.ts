@@ -73,20 +73,29 @@ export const walkAST = (
       case Kind.MAP: {
         const container = {};
         // note, we don't handle null aka '~' keys on purpose
-        for (const mapping of (node as YamlMap).mappings) {
-          // typing is broken, value might be null
-          if (mapping.key.value in container) {
-            if (options !== void 0 && options.json === false) {
-              throw new Error('Duplicate YAML mapping key encountered');
-            }
+        const seenKeys: string[] = [];
+        const handleMergeKeys = options !== void 0 && options.mergeKeys === true;
+        const handleDuplicates = (options !== void 0 && options.json === false) || duplicatedMappingKeys !== void 0;
 
-            if (duplicatedMappingKeys !== void 0) {
-              duplicatedMappingKeys.push(mapping.key);
+        for (const mapping of (node as YamlMap).mappings) {
+          const key = mapping.key.value;
+
+          if (handleDuplicates && (!handleMergeKeys || key !== SpecialMappingKeys.MergeKey)) {
+            if (seenKeys.includes(mapping.key.value)) {
+              if (options !== void 0 && options.json === false) {
+                throw new Error('Duplicate YAML mapping key encountered');
+              }
+
+              if (duplicatedMappingKeys !== void 0) {
+                duplicatedMappingKeys.push(mapping.key);
+              }
+            } else {
+              seenKeys.push(key);
             }
           }
 
           // https://yaml.org/type/merge.html merge keys, not a part of YAML spec
-          if (options !== void 0 && options.mergeKeys === true && mapping.key.value === SpecialMappingKeys.MergeKey) {
+          if (handleMergeKeys && key === SpecialMappingKeys.MergeKey) {
             Object.assign(container, reduceMergeKeys(walkAST(mapping.value, options, duplicatedMappingKeys)));
           } else {
             container[mapping.key.value] = walkAST(mapping.value, options, duplicatedMappingKeys);

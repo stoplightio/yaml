@@ -1,5 +1,5 @@
 import { JsonPath } from '@stoplight/types';
-import { Kind, YAMLMapping, YAMLNode, YAMLScalar, YAMLSequence } from 'yaml-ast-parser';
+import { Kind, YAMLMapping, YAMLNode, YAMLScalar, YAMLSequence } from '@stoplight/yaml-ast-parser';
 import { isObject } from './utils';
 
 export function buildJsonPath(node: YAMLNode) {

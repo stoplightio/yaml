@@ -1,5 +1,5 @@
 import { GetJsonPathForPosition } from '@stoplight/types';
-import { Kind, YAMLMapping, YAMLNode, YAMLSequence } from 'yaml-ast-parser';
+import { Kind, YAMLMapping, YAMLNode, YAMLSequence } from '@stoplight/yaml-ast-parser';
 import { buildJsonPath } from './buildJsonPath';
 import { YamlParserResult } from './types';
 import { isObject } from './utils';

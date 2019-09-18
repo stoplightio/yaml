@@ -41,7 +41,7 @@
   "dependencies": {
     "@stoplight/types": "^11.1.0",
     "lodash": "^4.17.15",
-    "yaml-ast-parser": "stoplightio/yaml-ast-parser#ba8043e2eb7b444789a424754935f991572c25a1"
+    "@stoplight/yaml-ast-parser": "0.0.43"
   },
   "devDependencies": {
     "@stoplight/scripts": "3.1.0",

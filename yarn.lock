@@ -1582,6 +1582,11 @@
   dependencies:
     "@types/json-schema" "^7.0.3"
 
+"@stoplight/yaml-ast-parser@0.0.43":
+  version "0.0.43"
+  resolved "https://registry.yarnpkg.com/@stoplight/yaml-ast-parser/-/yaml-ast-parser-0.0.43.tgz#c39cf86e98e48d73c483be96622b2b622cc56b0c"
+  integrity sha512-3buZXhav0Uc4pD7QWCTfysDTW0syyf1Nj/F73fgAfhO9+Fd6Q6IVB0k1ApcHFQgIPTHQAq9Lu8+ngvlGIjG6ZQ==
+
 "@storybook/addon-actions@4.0.11":
   version "4.0.11"
   resolved "https://registry.yarnpkg.com/@storybook/addon-actions/-/addon-actions-4.0.11.tgz#4a329172baa8dc75a79af1dab72ed57ca2993440"
@@ -13401,10 +13406,6 @@ yallist@^3.0.0, yallist@^3.0.2, yallist@^3.0.3:
   version "3.0.3"
   resolved "https://registry.yarnpkg.com/yallist/-/yallist-3.0.3.tgz#b4b049e314be545e3ce802236d6cd22cd91c3de9"
   integrity sha512-S+Zk8DEWE6oKpV+vI3qWkaK+jSbIK86pCwe2IF/xwIpQ8jEuxpw9NyaGjmp9+BoJv5FV2piqCDcoCtStppiq2A==
-
-yaml-ast-parser@stoplightio/yaml-ast-parser#ba8043e2eb7b444789a424754935f991572c25a1:
-  version "0.0.43"
-  resolved "https://codeload.github.com/stoplightio/yaml-ast-parser/tar.gz/ba8043e2eb7b444789a424754935f991572c25a1"
 
 yargs-parser@10.x, yargs-parser@^10.0.0:
   version "10.1.0"

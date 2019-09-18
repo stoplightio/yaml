@@ -13,7 +13,7 @@ import {
   YAMLNode,
   YAMLScalar,
   YAMLSequence,
-} from 'yaml-ast-parser';
+} from '@stoplight/yaml-ast-parser';
 import { buildJsonPath } from './buildJsonPath';
 import { SpecialMappingKeys } from './consts';
 import { lineForPosition } from './lineForPosition';

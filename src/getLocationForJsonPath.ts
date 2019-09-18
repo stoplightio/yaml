@@ -1,5 +1,5 @@
 import { GetLocationForJsonPath, ILocation, JsonPath } from '@stoplight/types';
-import { Kind, YAMLMapping, YAMLNode, YAMLSequence } from 'yaml-ast-parser';
+import { Kind, YAMLMapping, YAMLNode, YAMLSequence } from '@stoplight/yaml-ast-parser';
 import { SpecialMappingKeys } from './consts';
 import { lineForPosition } from './lineForPosition';
 import { YamlParserResult } from './types';

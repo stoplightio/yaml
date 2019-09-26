@@ -40,4 +40,23 @@ ${description
       .join('\n')}
 `);
   });
+
+  test('should use anchors for same objects by default', () => {
+    const obj = { foo: 'bar' };
+
+    expect(safeStringify({ a: obj, b: obj })).toEqual(`a: &ref_0
+  foo: bar
+b: *ref_0
+`);
+  });
+
+  test('should not use anchors for same objects if noRefs is truthy', () => {
+    const obj = { foo: 'bar' };
+
+    expect(safeStringify({ a: obj, b: obj }, { noRefs: true })).toEqual(`a:
+  foo: bar
+b:
+  foo: bar
+`);
+  });
 });

@@ -1,22 +1,14 @@
 import { GetLocationForJsonPath, ILocation, JsonPath, Optional } from '@stoplight/types';
-import { Kind } from '@stoplight/yaml-ast-parser';
 import { SpecialMappingKeys } from './consts';
 import { lineForPosition } from './lineForPosition';
-import {
-  Kind,
-  YAMLCompactMapping,
-  YAMLCompactNode,
-  YAMLMapping,
-  YAMLNode,
-  YamlParserCompactResult,
-  YamlParserResult,
-  YAMLSequence,
-} from './types';
+import { Kind, YAMLASTMapping, YAMLASTNode, YAMLCompactNode, YAMLNode, YamlParserResult } from './types';
 import { isObject } from './utils';
 
-export const getLocationForJsonPath: GetLocationForJsonPath<
-  YamlParserResult<unknown> | YamlParserCompactResult<unknown>
-> = ({ ast, lineMap, metadata }, path, closest = false) => {
+export const getLocationForJsonPath: GetLocationForJsonPath<YamlParserResult<unknown>> = (
+  { ast, lineMap, metadata },
+  path,
+  closest = false,
+) => {
   const node = findNodeAtPath(ast, path, { closest, mergeKeys: metadata !== undefined && metadata.mergeKeys === true });
   if (node === void 0) return;
 
@@ -26,7 +18,7 @@ export const getLocationForJsonPath: GetLocationForJsonPath<
   });
 };
 
-function getStartPosition(node: YAMLNode | YAMLCompactNode, offset: number): number {
+function getStartPosition(node: YAMLASTNode, offset: number): number {
   if (node.parent && node.parent.kind === Kind.MAPPING) {
     // the parent is a mapping with no value, let's default to the end of node
     if (node.parent.value === null) {
@@ -49,8 +41,11 @@ function getEndPosition(node: YAMLNode | YAMLCompactNode): number {
   switch (node.kind) {
     case Kind.SEQ:
       const { items } = node;
-      if (items.length !== 0 && items[items.length - 1] !== null) {
-        return getEndPosition(items[items.length - 1]);
+      if (items.length !== 0) {
+        const lastItem = items[items.length - 1];
+        if (isObject(lastItem)) {
+          return getEndPosition(lastItem);
+        }
       }
       break;
     case Kind.MAPPING:
@@ -78,9 +73,7 @@ function getEndPosition(node: YAMLNode | YAMLCompactNode): number {
 
 type FindNodeOptions = { closest: boolean; mergeKeys: boolean };
 
-function findNodeAtPath(node: YAMLNode, path: JsonPath, opts: FindNodeOptions): Optional<YAMLNode>;
-function findNodeAtPath(node: YAMLCompactNode, path: JsonPath, opts: FindNodeOptions): Optional<YAMLCompactNode>;
-function findNodeAtPath(node: YAMLNode | YAMLCompactNode, path: JsonPath, { closest, mergeKeys }: FindNodeOptions) {
+function findNodeAtPath(node: YAMLASTNode, path: JsonPath, { closest, mergeKeys }: FindNodeOptions) {
   pathLoop: for (const segment of path) {
     if (!isObject(node)) {
       return closest ? node : void 0;
@@ -107,7 +100,11 @@ function findNodeAtPath(node: YAMLNode | YAMLCompactNode, path: JsonPath, { clos
       case Kind.SEQ:
         for (let i = 0; i < node.items.length; i++) {
           if (i === Number(segment)) {
-            node = node.items[i];
+            const item = node.items[i];
+            if (isObject(item)) {
+              node = item;
+            }
+
             continue pathLoop;
           }
         }
@@ -121,15 +118,10 @@ function findNodeAtPath(node: YAMLNode | YAMLCompactNode, path: JsonPath, { clos
   return node;
 }
 
-function getMappings(mappings: YAMLMapping[], mergeKeys: boolean): YAMLMapping[];
-function getMappings(mappings: YAMLCompactMapping[], mergeKeys: boolean): YAMLCompactMapping[];
-function getMappings(
-  mappings: Array<YAMLMapping | YAMLCompactMapping>,
-  mergeKeys: boolean,
-): YAMLMapping[] | YAMLCompactMapping[] {
+function getMappings(mappings: YAMLASTMapping[], mergeKeys: boolean): YAMLASTMapping[] {
   if (!mergeKeys) return mappings;
 
-  return mappings.reduce<Array<YAMLMapping | YAMLCompactMapping>>((mergedMappings, mapping) => {
+  return mappings.reduce<YAMLASTMapping[]>((mergedMappings, mapping) => {
     if (isObject(mapping)) {
       if (mapping.key.value === SpecialMappingKeys.MergeKey) {
         mergedMappings.push(...reduceMergeKeys(mapping.value));
@@ -142,17 +134,15 @@ function getMappings(
   }, []);
 }
 
-function reduceMergeKeys(node: YAMLNode): YAMLMapping[];
-function reduceMergeKeys(node: YAMLCompactNode): YAMLCompactMapping[];
-function reduceMergeKeys(node: YAMLNode | YAMLCompactNode | undefined | null): YAMLMapping[] | YAMLCompactMapping[] {
+function reduceMergeKeys(node: Optional<YAMLASTNode | null>): YAMLASTMapping[] {
   if (!isObject(node)) return [];
 
   switch (node.kind) {
     case Kind.SEQ:
-      return node.items.reduceRight((items, item) => {
+      return (node.items as YAMLASTNode[]).reduceRight<YAMLASTMapping[]>((items, item) => {
         items.push(...reduceMergeKeys(item));
         return items;
-      }, []);
+      }, []) as YAMLASTMapping[];
     case Kind.MAP:
       return node.mappings;
     case Kind.ANCHOR_REF:

@@ -8,6 +8,7 @@ import {
   YAMLException,
 } from '@stoplight/yaml-ast-parser';
 import { buildJsonPath } from './buildJsonPath';
+import { compact } from './compact';
 import { SpecialMappingKeys } from './consts';
 import { lineForPosition } from './lineForPosition';
 import {
@@ -59,8 +60,12 @@ export const parseWithPointers = <T>(value: string, options?: IParseOptions): Ya
     parsed.diagnostics.sort((itemA, itemB) => itemA.range.start.line - itemB.range.start.line);
   }
 
-  if (Array.isArray(parsed.ast.errors)) {
+  if ('errors' in parsed.ast && Array.isArray(parsed.ast.errors)) {
     parsed.ast.errors.length = 0;
+  }
+
+  if (options === void 0 || options.compact !== false) {
+    compact(ast);
   }
 
   return parsed;
@@ -71,7 +76,7 @@ export const walkAST = (
   options?: IParseOptions,
   duplicatedMappingKeys?: YAMLNode[],
 ): unknown => {
-  if (node) {
+  if (isObject(node)) {
     switch (node.kind) {
       case Kind.MAP: {
         const container = {};

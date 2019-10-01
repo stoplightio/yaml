@@ -75,20 +75,14 @@ exports[`yaml parser parse diverse 1`] = `
 Object {
   "ast": Object {
     "endPosition": 442,
-    "errors": Array [],
     "kind": 2,
     "mappings": Array [
       Object {
         "endPosition": 189,
-        "errors": Array [],
         "key": Object {
-          "doubleQuoted": false,
           "endPosition": 145,
-          "errors": Array [],
           "kind": 0,
           "parent": [Circular],
-          "plainScalar": true,
-          "rawValue": "json",
           "startPosition": 141,
           "value": "json",
         },
@@ -97,27 +91,18 @@ Object {
         "startPosition": 141,
         "value": Object {
           "endPosition": 189,
-          "errors": Array [],
           "items": Array [
             Object {
-              "doubleQuoted": false,
               "endPosition": 156,
-              "errors": Array [],
               "kind": 0,
               "parent": [Circular],
-              "plainScalar": true,
-              "rawValue": "rigid",
               "startPosition": 151,
               "value": "rigid",
             },
             Object {
-              "doubleQuoted": false,
               "endPosition": 188,
-              "errors": Array [],
               "kind": 0,
               "parent": [Circular],
-              "plainScalar": true,
-              "rawValue": "better for data interchange",
               "startPosition": 161,
               "value": "better for data interchange",
             },
@@ -129,15 +114,10 @@ Object {
       },
       Object {
         "endPosition": 234,
-        "errors": Array [],
         "key": Object {
-          "doubleQuoted": false,
           "endPosition": 193,
-          "errors": Array [],
           "kind": 0,
           "parent": [Circular],
-          "plainScalar": true,
-          "rawValue": "yaml",
           "startPosition": 189,
           "value": "yaml",
         },
@@ -146,39 +126,26 @@ Object {
         "startPosition": 189,
         "value": Object {
           "endPosition": 234,
-          "errors": Array [],
           "items": Array [
             Object {
-              "doubleQuoted": false,
               "endPosition": 216,
-              "errors": Array [],
               "kind": 0,
               "parent": [Circular],
-              "plainScalar": true,
-              "rawValue": "slim and flexible",
               "startPosition": 199,
               "value": "slim and flexible",
             },
             Object {
-              "doubleQuoted": false,
               "endPosition": 224,
-              "errors": Array [],
               "kind": 0,
               "parent": [Circular],
-              "plainScalar": true,
-              "rawValue": "123",
               "startPosition": 221,
               "value": "123",
               "valueObject": 123,
             },
             Object {
-              "doubleQuoted": false,
               "endPosition": 233,
-              "errors": Array [],
               "kind": 0,
               "parent": [Circular],
-              "plainScalar": true,
-              "rawValue": "true",
               "startPosition": 229,
               "value": "true",
               "valueObject": true,
@@ -191,15 +158,10 @@ Object {
       },
       Object {
         "endPosition": 319,
-        "errors": Array [],
         "key": Object {
-          "doubleQuoted": false,
           "endPosition": 240,
-          "errors": Array [],
           "kind": 0,
           "parent": [Circular],
-          "plainScalar": true,
-          "rawValue": "object",
           "startPosition": 234,
           "value": "object",
         },
@@ -208,20 +170,14 @@ Object {
         "startPosition": 234,
         "value": Object {
           "endPosition": 319,
-          "errors": Array [],
           "kind": 2,
           "mappings": Array [
             Object {
               "endPosition": 254,
-              "errors": Array [],
               "key": Object {
-                "doubleQuoted": false,
                 "endPosition": 247,
-                "errors": Array [],
                 "kind": 0,
                 "parent": [Circular],
-                "plainScalar": true,
-                "rawValue": "key",
                 "startPosition": 244,
                 "value": "key",
               },
@@ -229,28 +185,19 @@ Object {
               "parent": [Circular],
               "startPosition": 244,
               "value": Object {
-                "doubleQuoted": false,
                 "endPosition": 254,
-                "errors": Array [],
                 "kind": 0,
                 "parent": [Circular],
-                "plainScalar": true,
-                "rawValue": "value",
                 "startPosition": 249,
                 "value": "value",
               },
             },
             Object {
               "endPosition": 319,
-              "errors": Array [],
               "key": Object {
-                "doubleQuoted": false,
                 "endPosition": 262,
-                "errors": Array [],
                 "kind": 0,
                 "parent": [Circular],
-                "plainScalar": true,
-                "rawValue": "array",
                 "startPosition": 257,
                 "value": "array",
               },
@@ -259,24 +206,17 @@ Object {
               "startPosition": 257,
               "value": Object {
                 "endPosition": 319,
-                "errors": Array [],
                 "items": Array [
                   Object {
                     "endPosition": 281,
-                    "errors": Array [],
                     "kind": 2,
                     "mappings": Array [
                       Object {
                         "endPosition": 281,
-                        "errors": Array [],
                         "key": Object {
-                          "doubleQuoted": false,
                           "endPosition": 280,
-                          "errors": Array [],
                           "kind": 0,
                           "parent": [Circular],
-                          "plainScalar": true,
-                          "rawValue": "null_value",
                           "startPosition": 270,
                           "value": "null_value",
                         },
@@ -291,20 +231,14 @@ Object {
                   },
                   Object {
                     "endPosition": 301,
-                    "errors": Array [],
                     "kind": 2,
                     "mappings": Array [
                       Object {
                         "endPosition": 301,
-                        "errors": Array [],
                         "key": Object {
-                          "doubleQuoted": false,
                           "endPosition": 295,
-                          "errors": Array [],
                           "kind": 0,
                           "parent": [Circular],
-                          "plainScalar": true,
-                          "rawValue": "boolean",
                           "startPosition": 288,
                           "value": "boolean",
                         },
@@ -312,13 +246,9 @@ Object {
                         "parent": [Circular],
                         "startPosition": 288,
                         "value": Object {
-                          "doubleQuoted": false,
                           "endPosition": 301,
-                          "errors": Array [],
                           "kind": 0,
                           "parent": [Circular],
-                          "plainScalar": true,
-                          "rawValue": "true",
                           "startPosition": 297,
                           "value": "true",
                           "valueObject": true,
@@ -330,20 +260,14 @@ Object {
                   },
                   Object {
                     "endPosition": 318,
-                    "errors": Array [],
                     "kind": 2,
                     "mappings": Array [
                       Object {
                         "endPosition": 318,
-                        "errors": Array [],
                         "key": Object {
-                          "doubleQuoted": false,
                           "endPosition": 315,
-                          "errors": Array [],
                           "kind": 0,
                           "parent": [Circular],
-                          "plainScalar": true,
-                          "rawValue": "integer",
                           "startPosition": 308,
                           "value": "integer",
                         },
@@ -351,13 +275,9 @@ Object {
                         "parent": [Circular],
                         "startPosition": 308,
                         "value": Object {
-                          "doubleQuoted": false,
                           "endPosition": 318,
-                          "errors": Array [],
                           "kind": 0,
                           "parent": [Circular],
-                          "plainScalar": true,
-                          "rawValue": "1",
                           "startPosition": 317,
                           "value": "1",
                           "valueObject": 1,
@@ -380,15 +300,10 @@ Object {
       },
       Object {
         "endPosition": 372,
-        "errors": Array [],
         "key": Object {
-          "doubleQuoted": false,
           "endPosition": 328,
-          "errors": Array [],
           "kind": 0,
           "parent": [Circular],
-          "plainScalar": true,
-          "rawValue": "paragraph",
           "startPosition": 319,
           "value": "paragraph",
         },
@@ -396,15 +311,9 @@ Object {
         "parent": [Circular],
         "startPosition": 319,
         "value": Object {
-          "doubleQuoted": false,
           "endPosition": 372,
-          "errors": Array [],
           "kind": 0,
           "parent": [Circular],
-          "rawValue": ">
-  Blank lines denote
-
-  paragraph breaks",
           "startPosition": 330,
           "value": "Blank lines denote
 paragraph breaks
@@ -413,15 +322,10 @@ paragraph breaks
       },
       Object {
         "endPosition": 441,
-        "errors": Array [],
         "key": Object {
-          "doubleQuoted": false,
           "endPosition": 380,
-          "errors": Array [],
           "kind": 0,
           "parent": [Circular],
-          "plainScalar": true,
-          "rawValue": "content",
           "startPosition": 373,
           "value": "content",
         },
@@ -429,16 +333,9 @@ paragraph breaks
         "parent": [Circular],
         "startPosition": 373,
         "value": Object {
-          "doubleQuoted": false,
           "endPosition": 441,
-          "errors": Array [],
           "kind": 0,
           "parent": [Circular],
-          "rawValue": "|-
-  Or we
-  can auto
-  convert line breaks
-  to save space",
           "startPosition": 382,
           "value": "Or we
 can auto

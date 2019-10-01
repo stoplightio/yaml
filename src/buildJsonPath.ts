@@ -1,11 +1,11 @@
 import { JsonPath } from '@stoplight/types';
-import { Kind, YAMLCompactNode, YAMLNode } from './types';
+import { Kind, YAMLASTNode } from './types';
 import { isObject } from './utils';
 
-export function buildJsonPath(node: YAMLNode | YAMLCompactNode): JsonPath {
+export function buildJsonPath(node: YAMLASTNode): JsonPath {
   const path: JsonPath = [];
 
-  let prevNode: YAMLNode | YAMLCompactNode = node;
+  let prevNode = node;
 
   while (node) {
     switch (node.kind) {
@@ -23,7 +23,7 @@ export function buildJsonPath(node: YAMLNode | YAMLCompactNode): JsonPath {
         break;
       case Kind.SEQ:
         if (prevNode) {
-          const index = node.items.indexOf(prevNode);
+          const index = (node.items as YAMLASTNode[]).indexOf(prevNode);
           if (prevNode.kind === Kind.SCALAR) {
             path[0] = index;
             // always better to point to parent node rather than nothing
@@ -35,7 +35,7 @@ export function buildJsonPath(node: YAMLNode | YAMLCompactNode): JsonPath {
     }
 
     prevNode = node;
-    node = node .parent;
+    node = node.parent;
   }
 
   return path;

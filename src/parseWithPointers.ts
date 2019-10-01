@@ -63,7 +63,7 @@ export const parseWithPointers = <T>(value: string, options?: IParseOptions): Ya
   return parsed;
 };
 
-const seenKeys = ['']; // let us avoid the elements transition from PACKED_SMI_ELEMENTS to PACKED_ELEMENTS on V8
+const seenKeys = ['']; // having an empty string in the array lets us avoid the elements transition from PACKED_SMI_ELEMENTS to PACKED_ELEMENTS on V8
 
 export const walkAST = (
   node: YAMLNode | null,

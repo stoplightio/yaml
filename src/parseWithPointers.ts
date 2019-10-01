@@ -63,6 +63,8 @@ export const parseWithPointers = <T>(value: string, options?: IParseOptions): Ya
   return parsed;
 };
 
+const seenKeys = ['']; // let us avoid the elements transition from PACKED_SMI_ELEMENTS to PACKED_ELEMENTS on V8
+
 export const walkAST = (
   node: YAMLNode | null,
   options?: IParseOptions,
@@ -72,8 +74,8 @@ export const walkAST = (
     switch (node.kind) {
       case Kind.MAP: {
         const container = {};
+        seenKeys.length = 0;
         // note, we don't handle null aka '~' keys on purpose
-        const seenKeys: string[] = [];
         const handleMergeKeys = options !== void 0 && options.mergeKeys === true;
         const handleDuplicates = (options !== void 0 && options.json === false) || duplicatedMappingKeys !== void 0;
 

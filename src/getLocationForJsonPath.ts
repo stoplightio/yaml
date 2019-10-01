@@ -1,14 +1,13 @@
-import { GetLocationForJsonPath, ILocation, JsonPath } from '@stoplight/types';
-import { Kind, YAMLMapping, YAMLNode, YAMLSequence } from '@stoplight/yaml-ast-parser';
+import { GetLocationForJsonPath, ILocation, JsonPath, Optional } from '@stoplight/types';
 import { SpecialMappingKeys } from './consts';
 import { lineForPosition } from './lineForPosition';
-import { YamlParserResult } from './types';
+import { Kind, YAMLMapping, YAMLNode, YamlParserResult } from './types';
 import { isObject } from './utils';
 
 export const getLocationForJsonPath: GetLocationForJsonPath<YamlParserResult<unknown>> = (
   { ast, lineMap, metadata },
   path,
-  closest = false
+  closest = false,
 ) => {
   const node = findNodeAtPath(ast, path, { closest, mergeKeys: metadata !== undefined && metadata.mergeKeys === true });
   if (node === void 0) return;
@@ -41,7 +40,7 @@ function getStartPosition(node: YAMLNode, offset: number): number {
 function getEndPosition(node: YAMLNode): number {
   switch (node.kind) {
     case Kind.SEQ:
-      const { items } = node as YAMLSequence;
+      const { items } = node;
       if (items.length !== 0 && items[items.length - 1] !== null) {
         return getEndPosition(items[items.length - 1]);
       }
@@ -72,10 +71,14 @@ function getEndPosition(node: YAMLNode): number {
 function findNodeAtPath(
   node: YAMLNode,
   path: JsonPath,
-  { closest, mergeKeys }: { closest: boolean; mergeKeys: boolean }
+  { closest, mergeKeys }: { closest: boolean; mergeKeys: boolean },
 ) {
   pathLoop: for (const segment of path) {
-    switch (node && node.kind) {
+    if (!isObject(node)) {
+      return closest ? node : void 0;
+    }
+
+    switch (node.kind) {
       case Kind.MAP:
         const mappings = getMappings(node.mappings, mergeKeys);
         // we iterate from the last to first to be compliant with JSONish mode
@@ -94,9 +97,9 @@ function findNodeAtPath(
 
         return closest ? node : void 0;
       case Kind.SEQ:
-        for (let i = 0; i < (node as YAMLSequence).items.length; i++) {
+        for (let i = 0; i < node.items.length; i++) {
           if (i === Number(segment)) {
-            node = (node as YAMLSequence).items[i];
+            node = node.items[i];
             continue pathLoop;
           }
         }
@@ -116,7 +119,7 @@ function getMappings(mappings: YAMLMapping[], mergeKeys: boolean): YAMLMapping[]
   return mappings.reduce<YAMLMapping[]>((mergedMappings, mapping) => {
     if (isObject(mapping)) {
       if (mapping.key.value === SpecialMappingKeys.MergeKey) {
-        mergedMappings.push(...reduceMergeKeys((mapping as YAMLMapping).value));
+        mergedMappings.push(...reduceMergeKeys(mapping.value));
       } else {
         mergedMappings.push(mapping);
       }
@@ -126,10 +129,12 @@ function getMappings(mappings: YAMLMapping[], mergeKeys: boolean): YAMLMapping[]
   }, []);
 }
 
-function reduceMergeKeys(node: YAMLNode): YAMLMapping[] {
+function reduceMergeKeys(node: Optional<YAMLNode | null>): YAMLMapping[] {
+  if (!isObject(node)) return [];
+
   switch (node.kind) {
     case Kind.SEQ:
-      return (node as YAMLSequence).items.reduceRight<YAMLMapping[]>((items, item) => {
+      return node.items.reduceRight<YAMLMapping[]>((items, item) => {
         items.push(...reduceMergeKeys(item));
         return items;
       }, []);

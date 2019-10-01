@@ -9,7 +9,7 @@ const diverse = fs.readFileSync(path.join(__dirname, './fixtures/diverse.yaml'),
 const duplicateMergeKeys = fs.readFileSync(path.join(__dirname, './fixtures/duplicate-merge-keys.yaml'), 'utf-8');
 const mergeKeysWithDuplicateProperties = fs.readFileSync(
   path.join(__dirname, './fixtures/merge-keys-with-duplicate-props.yaml'),
-  'utf-8'
+  'utf-8',
 );
 const spectral481 = fs.readFileSync(path.join(__dirname, './fixtures/spectral-481.yaml'), 'utf-8');
 
@@ -38,15 +38,15 @@ describe('yaml parser', () => {
     const { data } = parseWithPointers(spectral481);
     expect(data).toHaveProperty(
       'components.schemas.RandomRequest.properties.implicit_string_date.example',
-      '2012-10-12'
+      '2012-10-12',
     );
     expect(data).toHaveProperty(
       'components.schemas.RandomRequest.properties.another_implicit_string_date.example',
-      'x20121012'
+      'x20121012',
     );
     expect(data).toHaveProperty(
       'components.schemas.RandomRequest.properties.explicit_string_date.example',
-      '2012-10-12'
+      '2012-10-12',
     );
   });
 
@@ -100,7 +100,7 @@ test: !!css >
         `prop1: true
 prop2: true
   inner 1
-  val: 2`
+  val: 2`,
       );
 
       expect(result.diagnostics).toEqual([
@@ -267,7 +267,7 @@ european-cities: &cities
 
     test('throws when duplicate key is encountered and not in JSON-ish mode', () => {
       expect(parseWithPointers.bind(null, 'foo: 0\nfoo: 1\n', { json: false })).toThrow(
-        'Duplicate YAML mapping key encountered'
+        'Duplicate YAML mapping key encountered',
       );
     });
 
@@ -301,8 +301,8 @@ european-cities: &cities
     - yes
     - unfortunately, I am a dupe.
 `,
-          { ignoreDuplicateKeys: false }
-        )
+          { ignoreDuplicateKeys: false },
+        ),
       ).toHaveProperty('diagnostics', [
         {
           code: 'YAMLException',
@@ -354,7 +354,7 @@ european-cities: &cities
   << : *CENTER
   r: 10
   label: center/big`,
-        { mergeKeys: true }
+        { mergeKeys: true },
       );
 
       expect(result.data![4]).toEqual({
@@ -376,7 +376,7 @@ european-cities: &cities
 - # Merge multiple maps
   << : [ *CENTER, *BIG ]
   label: center/big`,
-        { mergeKeys: true }
+        { mergeKeys: true },
       );
 
       expect(result.data![4]).toEqual({
@@ -398,7 +398,7 @@ european-cities: &cities
 - # Merge multiple maps
   << : [ *CENTER, *BIG ]
   label: center/big`,
-        { mergeKeys: true }
+        { mergeKeys: true },
       );
 
       expect(result.data![4]).toEqual({
@@ -421,7 +421,7 @@ european-cities: &cities
   << : [ *BIG, *LEFT, *SMALL ]
   x: 1
   label: center/big`,
-        { mergeKeys: true }
+        { mergeKeys: true },
       );
 
       expect(result.data![4]).toEqual({

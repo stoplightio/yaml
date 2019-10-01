@@ -49,7 +49,7 @@ describe('getLocationForJsonPath', () => {
                 },
               },
             }
-          : void 0
+          : void 0,
       );
     });
   });
@@ -104,7 +104,7 @@ describe('getLocationForJsonPath', () => {
   describe('duplicate keys fixture', () => {
     const result = parseWithPointers(
       `foo: 2
-foo: 4`
+foo: 4`,
     );
 
     test.each`
@@ -164,7 +164,7 @@ foo: 4`
   << : [ *BIG, *LEFT, *SMALL ]
   x: 1
   label: center/big`,
-      { mergeKeys: true }
+      { mergeKeys: true },
     );
 
     test.each`
@@ -193,7 +193,7 @@ foo: 4`
 
     test('should return proper location for empty mapping value', () => {
       expect(
-        getLocationForJsonPath(result, ['definitions', 'AnotherDefinition', 'properties', 'special', 'description'])
+        getLocationForJsonPath(result, ['definitions', 'AnotherDefinition', 'properties', 'special', 'description']),
       ).toEqual({
         range: {
           start: {
@@ -223,7 +223,7 @@ foo: 4`
       ${[5, 6]} | ${[5, 9]}  | ${['paths']}           | ${true}
     `('should return proper location for given JSONPath $path', ({ start, end, path, closest }) => {
       expect(getLocationForJsonPath(resultCRLF, path, closest)).toEqual(
-        getLocationForJsonPath(resultLF, path, closest)
+        getLocationForJsonPath(resultLF, path, closest),
       );
       expect(getLocationForJsonPath(resultCRLF, path)).toEqual(getLocationForJsonPath(resultLF, path));
       expect(getLocationForJsonPath(resultCRLF, path, closest)).toEqual(
@@ -240,7 +240,7 @@ foo: 4`
                 },
               },
             }
-          : void 0
+          : void 0,
       );
     });
   });
@@ -266,7 +266,7 @@ foo: 4`
                 },
               },
             }
-          : void 0
+          : void 0,
       );
     });
   });

@@ -1,14 +1,22 @@
 import { GetLocationForJsonPath, ILocation, JsonPath, Optional } from '@stoplight/types';
+import { Kind } from '@stoplight/yaml-ast-parser';
 import { SpecialMappingKeys } from './consts';
 import { lineForPosition } from './lineForPosition';
-import { Kind, YAMLMapping, YAMLNode, YamlParserResult } from './types';
+import {
+  Kind,
+  YAMLCompactMapping,
+  YAMLCompactNode,
+  YAMLMapping,
+  YAMLNode,
+  YamlParserCompactResult,
+  YamlParserResult,
+  YAMLSequence,
+} from './types';
 import { isObject } from './utils';
 
-export const getLocationForJsonPath: GetLocationForJsonPath<YamlParserResult<unknown>> = (
-  { ast, lineMap, metadata },
-  path,
-  closest = false,
-) => {
+export const getLocationForJsonPath: GetLocationForJsonPath<
+  YamlParserResult<unknown> | YamlParserCompactResult<unknown>
+> = ({ ast, lineMap, metadata }, path, closest = false) => {
   const node = findNodeAtPath(ast, path, { closest, mergeKeys: metadata !== undefined && metadata.mergeKeys === true });
   if (node === void 0) return;
 
@@ -18,7 +26,7 @@ export const getLocationForJsonPath: GetLocationForJsonPath<YamlParserResult<unk
   });
 };
 
-function getStartPosition(node: YAMLNode, offset: number): number {
+function getStartPosition(node: YAMLNode | YAMLCompactNode, offset: number): number {
   if (node.parent && node.parent.kind === Kind.MAPPING) {
     // the parent is a mapping with no value, let's default to the end of node
     if (node.parent.value === null) {
@@ -37,7 +45,7 @@ function getStartPosition(node: YAMLNode, offset: number): number {
   return node.startPosition;
 }
 
-function getEndPosition(node: YAMLNode): number {
+function getEndPosition(node: YAMLNode | YAMLCompactNode): number {
   switch (node.kind) {
     case Kind.SEQ:
       const { items } = node;
@@ -68,11 +76,11 @@ function getEndPosition(node: YAMLNode): number {
   return node.endPosition;
 }
 
-function findNodeAtPath(
-  node: YAMLNode,
-  path: JsonPath,
-  { closest, mergeKeys }: { closest: boolean; mergeKeys: boolean },
-) {
+type FindNodeOptions = { closest: boolean; mergeKeys: boolean };
+
+function findNodeAtPath(node: YAMLNode, path: JsonPath, opts: FindNodeOptions): Optional<YAMLNode>;
+function findNodeAtPath(node: YAMLCompactNode, path: JsonPath, opts: FindNodeOptions): Optional<YAMLCompactNode>;
+function findNodeAtPath(node: YAMLNode | YAMLCompactNode, path: JsonPath, { closest, mergeKeys }: FindNodeOptions) {
   pathLoop: for (const segment of path) {
     if (!isObject(node)) {
       return closest ? node : void 0;
@@ -113,10 +121,15 @@ function findNodeAtPath(
   return node;
 }
 
-function getMappings(mappings: YAMLMapping[], mergeKeys: boolean): YAMLMapping[] {
+function getMappings(mappings: YAMLMapping[], mergeKeys: boolean): YAMLMapping[];
+function getMappings(mappings: YAMLCompactMapping[], mergeKeys: boolean): YAMLCompactMapping[];
+function getMappings(
+  mappings: Array<YAMLMapping | YAMLCompactMapping>,
+  mergeKeys: boolean,
+): YAMLMapping[] | YAMLCompactMapping[] {
   if (!mergeKeys) return mappings;
 
-  return mappings.reduce<YAMLMapping[]>((mergedMappings, mapping) => {
+  return mappings.reduce<Array<YAMLMapping | YAMLCompactMapping>>((mergedMappings, mapping) => {
     if (isObject(mapping)) {
       if (mapping.key.value === SpecialMappingKeys.MergeKey) {
         mergedMappings.push(...reduceMergeKeys(mapping.value));
@@ -129,12 +142,14 @@ function getMappings(mappings: YAMLMapping[], mergeKeys: boolean): YAMLMapping[]
   }, []);
 }
 
-function reduceMergeKeys(node: Optional<YAMLNode | null>): YAMLMapping[] {
+function reduceMergeKeys(node: YAMLNode): YAMLMapping[];
+function reduceMergeKeys(node: YAMLCompactNode): YAMLCompactMapping[];
+function reduceMergeKeys(node: YAMLNode | YAMLCompactNode | undefined | null): YAMLMapping[] | YAMLCompactMapping[] {
   if (!isObject(node)) return [];
 
   switch (node.kind) {
     case Kind.SEQ:
-      return node.items.reduceRight<YAMLMapping[]>((items, item) => {
+      return node.items.reduceRight((items, item) => {
         items.push(...reduceMergeKeys(item));
         return items;
       }, []);

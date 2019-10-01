@@ -7,16 +7,15 @@ export interface IParseOptions extends YAMLAstParser.LoadOptions {
   mergeKeys?: boolean;
 }
 
-export type YAMLBaseNode<K extends Kind> = Omit<YAMLAstParser.YAMLNode, 'kind' | 'parent'> & {
-  kind: K;
-  parent: YAMLNode;
-};
 export type YAMLAnchorReference = Omit<YAMLAstParser.YAMLAnchorReference, 'kind' | 'value' | 'parent'> & {
   kind: Kind.ANCHOR_REF;
   value: Optional<YAMLNode>;
   parent: YAMLNode;
 };
-export type YAMLIncludeReference = YAMLBaseNode<Kind.INCLUDE_REF>;
+export type YAMLIncludeReference = Omit<YAMLAstParser.YAMLNode, 'kind' | 'parent'> & {
+  kind: Kind.INCLUDE_REF;
+  parent: YAMLNode;
+};
 export type YAMLScalar = Omit<YAMLAstParser.YAMLScalar, 'kind' | 'parent'> & { kind: Kind.SCALAR; parent: YAMLNode };
 export type YAMLMap = Omit<YAMLAstParser.YamlMap, 'kind' | 'mappings' | 'parent'> & {
   kind: Kind.MAP;
@@ -37,6 +36,48 @@ export type YAMLSequence = Omit<YAMLAstParser.YAMLSequence, 'kind' | 'items' | '
 
 export type YAMLNode = YAMLAnchorReference | YAMLIncludeReference | YAMLScalar | YAMLMap | YAMLMapping | YAMLSequence;
 
+export type YAMLIgnoreKeys =
+  | 'anchorId'
+  | 'errors'
+  | 'referencesAnchor'
+  | 'doubleQuoted'
+  | 'singleQuoted'
+  | 'plainScalar'
+  | 'rawValue';
+
+export type YAMLCompactAnchorReference = Omit<YAMLAnchorReference, YAMLIgnoreKeys | 'value' | 'parent'> & {
+  value: Optional<YAMLCompactNode>;
+  parent: YAMLCompactNode;
+};
+export type YAMLCompactIncludeReference = Omit<YAMLIncludeReference, YAMLIgnoreKeys | 'parent'> & {
+  parent: YAMLCompactNode;
+};
+export type YAMLCompactScalar = Omit<YAMLScalar, YAMLIgnoreKeys | 'parent'> & { parent: YAMLCompactNode };
+export type YAMLCompactMap = Omit<YAMLMap, YAMLIgnoreKeys | 'mappings' | 'parent'> & {
+  mappings: YAMLCompactMapping[];
+  parent: YAMLCompactNode;
+};
+export type YAMLCompactMapping = Omit<YAMLMapping, YAMLIgnoreKeys | 'key' | 'value' | 'parent'> & {
+  key: YAMLCompactScalar;
+  value: YAMLCompactNode | null;
+  parent: YAMLCompactNode;
+};
+export type YAMLCompactSequence = Omit<YAMLSequence, YAMLIgnoreKeys | 'items' | 'parent'> & {
+  items: YAMLCompactNode[];
+  parent: YAMLCompactNode;
+};
+
+export type YAMLCompactNode =
+  | YAMLCompactIncludeReference
+  | YAMLCompactScalar
+  | YAMLCompactAnchorReference
+  | YAMLCompactMap
+  | YAMLCompactMapping
+  | YAMLCompactSequence;
+
 export type YamlParserResult<T> = IParserResult<T, YAMLNode, number[], IParseOptions>;
+export type YamlParserCompactResult<T> = IParserResult<T, YAMLCompactNode, number[], IParseOptions>;
+
+export type YAMLASTNode = YAMLNode | YAMLCompactNode;
 
 export { Kind, ScalarType };

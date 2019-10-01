@@ -1,11 +1,11 @@
 import { JsonPath } from '@stoplight/types';
-import { Kind, YAMLNode } from './types';
+import { Kind, YAMLCompactNode, YAMLNode } from './types';
 import { isObject } from './utils';
 
-export function buildJsonPath(node: YAMLNode) {
+export function buildJsonPath(node: YAMLNode | YAMLCompactNode): JsonPath {
   const path: JsonPath = [];
 
-  let prevNode: YAMLNode = node;
+  let prevNode: YAMLNode | YAMLCompactNode = node;
 
   while (node) {
     switch (node.kind) {
@@ -35,7 +35,7 @@ export function buildJsonPath(node: YAMLNode) {
     }
 
     prevNode = node;
-    node = node.parent;
+    node = node .parent;
   }
 
   return path;

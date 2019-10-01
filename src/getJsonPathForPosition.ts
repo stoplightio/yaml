@@ -1,12 +1,11 @@
 import { GetJsonPathForPosition } from '@stoplight/types';
 import { buildJsonPath } from './buildJsonPath';
-import { Kind, YAMLNode, YamlParserResult } from './types';
+import { Kind, YAMLCompactNode, YAMLNode, YamlParserCompactResult, YamlParserResult } from './types';
 import { isObject } from './utils';
 
-export const getJsonPathForPosition: GetJsonPathForPosition<YamlParserResult<unknown>> = (
-  { ast, lineMap },
-  { line, character },
-) => {
+export const getJsonPathForPosition: GetJsonPathForPosition<
+  YamlParserResult<unknown> | YamlParserCompactResult<unknown>
+> = ({ ast, lineMap }, { line, character }) => {
   if (line >= lineMap.length || character >= lineMap[line]) {
     return;
   }
@@ -21,7 +20,9 @@ export const getJsonPathForPosition: GetJsonPathForPosition<YamlParserResult<unk
   return path;
 };
 
-function* walk(node: YAMLNode): IterableIterator<YAMLNode> {
+function walk(node: YAMLNode): IterableIterator<YAMLNode>;
+function walk(node: YAMLCompactNode): IterableIterator<YAMLCompactNode>;
+function* walk(node: YAMLNode | YAMLCompactNode): IterableIterator<YAMLNode | YAMLCompactNode> {
   switch (node.kind) {
     case Kind.MAP:
       if (node.mappings.length !== 0) {
@@ -59,7 +60,13 @@ function* walk(node: YAMLNode): IterableIterator<YAMLNode> {
   }
 }
 
-function getFirstScalarChild(node: YAMLNode, line: number, lineMap: number[]): YAMLNode {
+function getFirstScalarChild(node: YAMLNode, line: number, lineMap: number[]): YAMLNode;
+function getFirstScalarChild(node: YAMLCompactNode, line: number, lineMap: number[]): YAMLCompactNode;
+function getFirstScalarChild(
+  node: YAMLNode | YAMLCompactNode,
+  line: number,
+  lineMap: number[],
+): YAMLNode | YAMLCompactNode {
   const startOffset = lineMap[line - 1] + 1;
   const endOffset = lineMap[line];
 
@@ -91,7 +98,19 @@ function getFirstScalarChild(node: YAMLNode, line: number, lineMap: number[]): Y
   return node;
 }
 
-function findClosestScalar(container: YAMLNode, offset: number, line: number, lineMap: number[]): YAMLNode | void {
+function findClosestScalar(container: YAMLNode, offset: number, line: number, lineMap: number[]): YAMLNode | void;
+function findClosestScalar(
+  container: YAMLCompactNode,
+  offset: number,
+  line: number,
+  lineMap: number[],
+): YAMLCompactNode | void;
+function findClosestScalar(
+  container: YAMLNode | YAMLCompactNode,
+  offset: number,
+  line: number,
+  lineMap: number[],
+): YAMLNode | YAMLCompactNode | void {
   for (const node of walk(container)) {
     if (node.startPosition <= offset && offset <= node.endPosition) {
       return node.kind === Kind.SCALAR ? node : findClosestScalar(node, offset, line, lineMap);

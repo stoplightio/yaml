@@ -1,12 +1,11 @@
 import { GetJsonPathForPosition } from '@stoplight/types';
-import { Kind, YAMLMapping, YAMLNode, YAMLSequence } from '@stoplight/yaml-ast-parser';
 import { buildJsonPath } from './buildJsonPath';
-import { YamlParserResult } from './types';
+import { Kind, YAMLNode, YamlParserResult } from './types';
 import { isObject } from './utils';
 
 export const getJsonPathForPosition: GetJsonPathForPosition<YamlParserResult<unknown>> = (
   { ast, lineMap },
-  { line, character }
+  { line, character },
 ) => {
   if (line >= lineMap.length || character >= lineMap[line]) {
     return;
@@ -15,7 +14,7 @@ export const getJsonPathForPosition: GetJsonPathForPosition<YamlParserResult<unk
   const startOffset = line === 0 ? 0 : lineMap[line - 1] + 1;
 
   const node = findClosestScalar(ast, Math.min(lineMap[line] - 1, startOffset + character), line, lineMap);
-  if (!node) return;
+  if (!isObject(node)) return;
 
   const path = buildJsonPath(node);
   if (path.length === 0) return;
@@ -36,17 +35,17 @@ function* walk(node: YAMLNode): IterableIterator<YAMLNode> {
       break;
     case Kind.MAPPING:
       if (isObject(node.key)) {
-        yield (node as YAMLMapping).key;
+        yield node.key;
       }
 
       if (isObject(node.value)) {
-        yield (node as YAMLMapping).value;
+        yield node.value;
       }
 
       break;
     case Kind.SEQ:
-      if ((node as YAMLSequence).items.length !== 0) {
-        for (const item of (node as YAMLSequence).items) {
+      if (node.items.length !== 0) {
+        for (const item of node.items) {
           if (isObject(item)) {
             yield item;
           }
@@ -66,7 +65,7 @@ function getFirstScalarChild(node: YAMLNode, line: number, lineMap: number[]): Y
 
   switch (node.kind) {
     case Kind.MAPPING:
-      return (node as YAMLMapping).key;
+      return node.key;
     case Kind.MAP:
       if (node.mappings.length !== 0) {
         for (const mapping of node.mappings) {
@@ -78,8 +77,8 @@ function getFirstScalarChild(node: YAMLNode, line: number, lineMap: number[]): Y
 
       break;
     case Kind.SEQ:
-      if ((node as YAMLSequence).items.length !== 0) {
-        for (const item of (node as YAMLSequence).items) {
+      if (node.items.length !== 0) {
+        for (const item of node.items) {
           if (item.startPosition > startOffset && item.startPosition <= endOffset) {
             return getFirstScalarChild(item, line, lineMap);
           }
@@ -109,8 +108,8 @@ function findClosestScalar(container: YAMLNode, offset: number, line: number, li
       return getFirstScalarChild(container, line, lineMap);
     }
 
-    if ((container as YAMLMapping).value && (container as YAMLMapping).key.endPosition < offset) {
-      return getFirstScalarChild((container as YAMLMapping).value, line, lineMap);
+    if (container.value && container.key.endPosition < offset) {
+      return getFirstScalarChild(container.value, line, lineMap);
     }
   }
 

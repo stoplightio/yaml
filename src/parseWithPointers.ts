@@ -1,30 +1,34 @@
-import { DiagnosticSeverity, IDiagnostic } from '@stoplight/types';
+import { DiagnosticSeverity, IDiagnostic, Optional } from '@stoplight/types';
 import {
   determineScalarType,
-  Kind,
   load as loadAST,
   parseYamlBoolean,
   parseYamlFloat,
   parseYamlInteger,
-  ScalarType,
-  YAMLAnchorReference,
   YAMLException,
-  YamlMap,
-  YAMLNode,
-  YAMLScalar,
-  YAMLSequence,
 } from '@stoplight/yaml-ast-parser';
 import { buildJsonPath } from './buildJsonPath';
 import { SpecialMappingKeys } from './consts';
 import { lineForPosition } from './lineForPosition';
-import { IParseOptions, YamlParserResult } from './types';
+import {
+  IParseOptions,
+  Kind,
+  ScalarType,
+  YAMLAnchorReference,
+  YAMLMap,
+  YAMLNode,
+  YamlParserResult,
+  YAMLScalar,
+  YAMLSequence,
+} from './types';
+import { isObject } from './utils';
 
 export const parseWithPointers = <T>(value: string, options?: IParseOptions): YamlParserResult<T | undefined> => {
   const lineMap = computeLineMap(value);
   const ast = loadAST(value, {
     ...options,
     ignoreDuplicateKeys: true,
-  });
+  }) as YAMLNode;
 
   const parsed: YamlParserResult<T | undefined> = {
     ast,
@@ -41,7 +45,7 @@ export const parseWithPointers = <T>(value: string, options?: IParseOptions): Ya
   parsed.data = walkAST(
     ast,
     options,
-    options !== undefined && options.ignoreDuplicateKeys === false ? duplicatedMappingKeys : undefined
+    options !== undefined && options.ignoreDuplicateKeys === false ? duplicatedMappingKeys : undefined,
   ) as T;
 
   if (duplicatedMappingKeys.length > 0) {
@@ -66,7 +70,7 @@ export const parseWithPointers = <T>(value: string, options?: IParseOptions): Ya
 export const walkAST = (
   node: YAMLNode | null,
   options?: IParseOptions,
-  duplicatedMappingKeys?: YAMLNode[]
+  duplicatedMappingKeys?: YAMLNode[],
 ): unknown => {
   if (node) {
     switch (node.kind) {
@@ -77,7 +81,7 @@ export const walkAST = (
         const handleMergeKeys = options !== void 0 && options.mergeKeys === true;
         const handleDuplicates = (options !== void 0 && options.json === false) || duplicatedMappingKeys !== void 0;
 
-        for (const mapping of (node as YamlMap).mappings) {
+        for (const mapping of node.mappings) {
           const key = mapping.key.value;
 
           if (handleDuplicates && (!handleMergeKeys || key !== SpecialMappingKeys.MergeKey)) {
@@ -105,15 +109,16 @@ export const walkAST = (
         return container;
       }
       case Kind.SEQ:
-        return (node as YAMLSequence).items.map(item => walkAST(item, options, duplicatedMappingKeys));
+        return node.items.map(item => walkAST(item, options, duplicatedMappingKeys));
       case Kind.SCALAR:
-        return getScalarValue(node as YAMLScalar);
-      case Kind.ANCHOR_REF:
-        if (node.value !== void 0 && isCircularAnchorRef(node as YAMLAnchorReference)) {
-          node.value = dereferenceAnchor(node.value, (node as YAMLAnchorReference).referencesAnchor);
+        return getScalarValue(node);
+      case Kind.ANCHOR_REF: {
+        if (isObject(node.value) && isCircularAnchorRef(node)) {
+          node.value = (dereferenceAnchor(node.value, node.referencesAnchor) as YAMLNode) || void 0;
         }
 
-        return walkAST(node.value, options, duplicatedMappingKeys);
+        return node.value && walkAST(node.value, options, duplicatedMappingKeys);
+      }
       default:
         return null;
     }
@@ -135,27 +140,27 @@ const isCircularAnchorRef = (anchorRef: YAMLAnchorReference) => {
   return false;
 };
 
-const dereferenceAnchor = (node: YAMLNode, anchorId: string): YAMLNode | YAMLNode[] | void => {
-  if (!node) return node;
-  if ('referencesAnchor' in node && (node as YAMLAnchorReference).referencesAnchor === anchorId) return;
+const dereferenceAnchor = (node: YAMLNode | null, anchorId: string): Optional<YAMLNode | YAMLNode[] | null> => {
+  if (!isObject(node)) return node;
+  if (node.kind === Kind.ANCHOR_REF && node.referencesAnchor === anchorId) return;
 
   switch (node.kind) {
     case Kind.MAP:
       return {
         ...node,
-        mappings: (node as YamlMap).mappings.map(mapping => dereferenceAnchor(mapping, anchorId) as YAMLNode),
-      } as YamlMap;
+        mappings: node.mappings.map(mapping => dereferenceAnchor(mapping, anchorId)),
+      } as YAMLMap;
     case Kind.SEQ:
       return {
         ...node,
-        items: (node as YAMLSequence).items.map(item => dereferenceAnchor(item, anchorId) as YAMLNode),
+        items: node.items.map(item => dereferenceAnchor(item, anchorId)),
       } as YAMLSequence;
     case Kind.MAPPING:
-      return { ...node, value: dereferenceAnchor(node.value, anchorId) };
+      return { ...node, value: dereferenceAnchor(node.value, anchorId) as YAMLNode };
     case Kind.SCALAR:
       return node;
     case Kind.ANCHOR_REF:
-      if (node.value !== undefined && isCircularAnchorRef(node as YAMLAnchorReference)) {
+      if (isObject(node.value) && isCircularAnchorRef(node)) {
         return;
       }
 

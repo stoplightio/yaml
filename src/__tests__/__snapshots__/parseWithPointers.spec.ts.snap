@@ -4,36 +4,36 @@ exports[`yaml parser dereferencing anchor refs insane edge case 1`] = `
 Array [
   Array [
     Array [
-      undefined,
+      null,
       Object {
         "test": Array [
-          undefined,
+          null,
         ],
       },
       Object {
         "abc": Object {
           "a": null,
-          "c": undefined,
+          "c": null,
           "foo": 2,
-          "x": undefined,
+          "x": null,
         },
       },
     ],
     Object {
       "test": Array [
         Array [
-          undefined,
+          null,
           Object {
             "test": Array [
-              undefined,
+              null,
             ],
           },
           Object {
             "abc": Object {
               "a": null,
-              "c": undefined,
+              "c": null,
               "foo": 2,
-              "x": undefined,
+              "x": null,
             },
           },
         ],
@@ -43,27 +43,27 @@ Array [
       "abc": Object {
         "a": null,
         "c": Array [
-          undefined,
+          null,
           Object {
             "test": Array [
-              undefined,
+              null,
             ],
           },
           Object {
             "abc": Object {
               "a": null,
-              "c": undefined,
+              "c": null,
               "foo": 2,
-              "x": undefined,
+              "x": null,
             },
           },
         ],
         "foo": 2,
         "x": Object {
           "a": null,
-          "c": undefined,
+          "c": null,
           "foo": 2,
-          "x": undefined,
+          "x": null,
         },
       },
     },

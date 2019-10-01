@@ -1,4 +1,4 @@
-import { DiagnosticSeverity, IDiagnostic, Optional } from '@stoplight/types';
+import { DiagnosticSeverity, IDiagnostic } from '@stoplight/types';
 import {
   determineScalarType,
   load as loadAST,
@@ -15,11 +15,10 @@ import {
   Kind,
   ScalarType,
   YAMLAnchorReference,
-  YAMLMap,
+  YAMLMapping,
   YAMLNode,
   YamlParserResult,
   YAMLScalar,
-  YAMLSequence,
 } from './types';
 import { isObject } from './utils';
 
@@ -114,7 +113,7 @@ export const walkAST = (
         return getScalarValue(node);
       case Kind.ANCHOR_REF: {
         if (isObject(node.value) && isCircularAnchorRef(node)) {
-          node.value = (dereferenceAnchor(node.value, node.referencesAnchor) as YAMLNode) || void 0;
+          node.value = dereferenceAnchor(node.value, node.referencesAnchor)!;
         }
 
         return node.value && walkAST(node.value, options, duplicatedMappingKeys);
@@ -140,28 +139,28 @@ const isCircularAnchorRef = (anchorRef: YAMLAnchorReference) => {
   return false;
 };
 
-const dereferenceAnchor = (node: YAMLNode | null, anchorId: string): Optional<YAMLNode | YAMLNode[] | null> => {
+const dereferenceAnchor = (node: YAMLNode | null, anchorId: string): YAMLNode | null => {
   if (!isObject(node)) return node;
-  if (node.kind === Kind.ANCHOR_REF && node.referencesAnchor === anchorId) return;
+  if (node.kind === Kind.ANCHOR_REF && node.referencesAnchor === anchorId) return null;
 
   switch (node.kind) {
     case Kind.MAP:
       return {
         ...node,
-        mappings: node.mappings.map(mapping => dereferenceAnchor(mapping, anchorId)),
-      } as YAMLMap;
+        mappings: node.mappings.map(mapping => dereferenceAnchor(mapping, anchorId) as YAMLMapping),
+      };
     case Kind.SEQ:
       return {
         ...node,
-        items: node.items.map(item => dereferenceAnchor(item, anchorId)),
-      } as YAMLSequence;
+        items: node.items.map(item => dereferenceAnchor(item, anchorId)!),
+      };
     case Kind.MAPPING:
-      return { ...node, value: dereferenceAnchor(node.value, anchorId) as YAMLNode };
+      return { ...node, value: dereferenceAnchor(node.value, anchorId) };
     case Kind.SCALAR:
       return node;
     case Kind.ANCHOR_REF:
       if (isObject(node.value) && isCircularAnchorRef(node)) {
-        return;
+        return null;
       }
 
       return node;

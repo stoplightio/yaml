@@ -53,7 +53,7 @@ to save space`,
 european-cities:
   austria: *austrian-cities
 `);
-      expect(result).toEqual({
+      expect(result).toStrictEqual({
         'austrian-cities': ['Vienna', 'Graz', 'Linz', 'Salzburg'],
         'european-cities': {
           austria: ['Vienna', 'Graz', 'Linz', 'Salzburg'],
@@ -68,13 +68,13 @@ european-cities:
       name: *ref
 `);
 
-      expect(result).toEqual({
+      expect(result).toStrictEqual({
         definitions: {
           model: {
             foo: {
               name: {
                 foo: {
-                  name: undefined,
+                  name: null,
                 },
               },
             },
@@ -90,10 +90,10 @@ european-cities:
   - test:
     - *foo
 `);
-      expect(result).toEqual([
+      expect(result).toStrictEqual([
         [
           {
-            test: [[{ test: [undefined] }]],
+            test: [[{ test: [null] }]],
           },
         ],
       ]);
@@ -113,10 +113,11 @@ european-cities: &cities
     all: *cities
 `);
 
-      expect(result).toEqual({
+      expect(result).toStrictEqual({
         'austrian-cities': ['Vienna', 'Graz', 'Linz', 'Salzburg'],
         'european-cities': {
           all: {
+            all: null,
             austria: ['Vienna', 'Graz', 'Linz', 'Salzburg'],
           },
           austria: ['Vienna', 'Graz', 'Linz', 'Salzburg'],
@@ -134,10 +135,10 @@ european-cities: &cities
     - *foo
 `);
 
-      expect(result).toEqual({
+      expect(result).toStrictEqual({
         a: [
           {
-            b: [true, { c: [true, { c: undefined }, undefined] }, [{ b: [true, { c: undefined }, undefined] }]],
+            b: [true, { c: [true, { c: null }, null] }, [{ b: [true, { c: null }, null] }]],
           },
         ],
       });

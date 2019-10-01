@@ -170,7 +170,7 @@ european-cities:
             foo: {
               name: {
                 foo: {
-                  name: undefined,
+                  name: null,
                 },
               },
             },
@@ -189,7 +189,7 @@ european-cities:
       expect(result.data).toEqual([
         [
           {
-            test: [[{ test: [undefined] }]],
+            test: [[{ test: [null] }]],
           },
         ],
       ]);
@@ -209,10 +209,11 @@ european-cities: &cities
     all: *cities
 `);
 
-      expect(result.data).toEqual({
+      expect(result.data).toStrictEqual({
         'austrian-cities': ['Vienna', 'Graz', 'Linz', 'Salzburg'],
         'european-cities': {
           all: {
+            all: null,
             austria: ['Vienna', 'Graz', 'Linz', 'Salzburg'],
           },
           austria: ['Vienna', 'Graz', 'Linz', 'Salzburg'],
@@ -230,10 +231,10 @@ european-cities: &cities
     - *foo
 `);
 
-      expect(result.data).toEqual({
+      expect(result.data).toStrictEqual({
         a: [
           {
-            b: [true, { c: [true, { c: undefined }, undefined] }, [{ b: [true, { c: undefined }, undefined] }]],
+            b: [true, { c: [true, { c: null }, null] }, [{ b: [true, { c: null }, null] }]],
           },
         ],
       });

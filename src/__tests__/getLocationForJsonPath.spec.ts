@@ -271,7 +271,80 @@ foo: 4`,
     });
   });
 
-  it('should handle null-ish items', () => {
+  describe('sequence with null items', () => {
+    const result = parseWithPointers(`-  
+- foo
+-
+- bar
+`);
+
+    test.each`
+      start     | end       | path      | closest
+      ${[]}     | ${[]}     | ${[0]}    | ${false}
+      ${[0, 0]} | ${[3, 5]} | ${[0]}    | ${true}
+      ${[]}     | ${[]}     | ${[0, 1]} | ${false}
+      ${[0, 0]} | ${[3, 5]} | ${[0, 1]} | ${true}
+      ${[1, 2]} | ${[1, 5]} | ${[1]}    | ${false}
+      ${[1, 2]} | ${[1, 5]} | ${[1]}    | ${true}
+      ${[]}     | ${[]}     | ${[2]}    | ${false}
+      ${[0, 0]} | ${[3, 5]} | ${[2]}    | ${true}
+      ${[3, 2]} | ${[3, 5]} | ${[3]}    | ${false}
+      ${[3, 2]} | ${[3, 5]} | ${[3]}    | ${true}
+    `('should return proper location for given JSONPath $path', ({ start, end, path, closest }) => {
+      expect(getLocationForJsonPath(result, path, closest)).toEqual(
+        start.length > 0 && end.length > 0
+          ? {
+              range: {
+                start: {
+                  character: start[1],
+                  line: start[0],
+                },
+                end: {
+                  character: end[1],
+                  line: end[0],
+                },
+              },
+            }
+          : void 0,
+      );
+    });
+  });
+
+  describe('mappings with null values', () => {
+    const result = parseWithPointers(`foo: ~
+bar: null
+baz:
+`);
+
+    test.each`
+      start     | end       | path       | closest
+      ${[0, 5]} | ${[0, 6]} | ${['foo']} | ${false}
+      ${[0, 5]} | ${[0, 6]} | ${['foo']} | ${true}
+      ${[1, 5]} | ${[1, 9]} | ${['bar']} | ${false}
+      ${[1, 5]} | ${[1, 9]} | ${['bar']} | ${true}
+      ${[2, 4]} | ${[2, 4]} | ${['baz']} | ${false}
+      ${[2, 4]} | ${[2, 4]} | ${['baz']} | ${true}
+    `('should return proper location for given JSONPath $path', ({ start, end, path, closest }) => {
+      expect(getLocationForJsonPath(result, path, closest)).toEqual(
+        start.length > 0 && end.length > 0
+          ? {
+              range: {
+                start: {
+                  character: start[1],
+                  line: start[0],
+                },
+                end: {
+                  character: end[1],
+                  line: end[0],
+                },
+              },
+            }
+          : void 0,
+      );
+    });
+  });
+
+  test('should handle null-ish items', () => {
     const result = parseWithPointers(`----~
 foo: bar
 `);

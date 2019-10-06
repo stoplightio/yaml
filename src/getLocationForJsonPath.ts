@@ -41,9 +41,13 @@ function getEndPosition(node: YAMLNode): number {
   switch (node.kind) {
     case Kind.SEQ:
       const { items } = node;
-      if (items.length !== 0 && items[items.length - 1] !== null) {
-        return getEndPosition(items[items.length - 1]);
+      if (items.length !== 0) {
+        const lastItem = items[items.length - 1];
+        if (lastItem !== null) {
+          return getEndPosition(lastItem);
+        }
       }
+
       break;
     case Kind.MAPPING:
       if (node.value !== null) {
@@ -99,7 +103,12 @@ function findNodeAtPath(
       case Kind.SEQ:
         for (let i = 0; i < node.items.length; i++) {
           if (i === Number(segment)) {
-            node = node.items[i];
+            const item = node.items[i];
+            if (item === null) {
+              break;
+            }
+
+            node = item;
             continue pathLoop;
           }
         }

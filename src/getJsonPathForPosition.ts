@@ -79,7 +79,7 @@ function getFirstScalarChild(node: YAMLNode, line: number, lineMap: number[]): Y
     case Kind.SEQ:
       if (node.items.length !== 0) {
         for (const item of node.items) {
-          if (item.startPosition > startOffset && item.startPosition <= endOffset) {
+          if (item !== null && item.startPosition > startOffset && item.startPosition <= endOffset) {
             return getFirstScalarChild(item, line, lineMap);
           }
         }

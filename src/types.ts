@@ -17,7 +17,11 @@ export type YAMLAnchorReference = Omit<YAMLAstParser.YAMLAnchorReference, 'kind'
   parent: YAMLNode;
 };
 export type YAMLIncludeReference = YAMLBaseNode<Kind.INCLUDE_REF>;
-export type YAMLScalar = Omit<YAMLAstParser.YAMLScalar, 'kind' | 'parent'> & { kind: Kind.SCALAR; parent: YAMLNode };
+export type YAMLScalar = Omit<YAMLAstParser.YAMLScalar, 'kind' | 'parent'> & {
+  kind: Kind.SCALAR;
+  parent: YAMLNode;
+  valueObject: unknown;
+};
 export type YAMLMap = Omit<YAMLAstParser.YamlMap, 'kind' | 'mappings' | 'parent'> & {
   kind: Kind.MAP;
   mappings: YAMLMapping[];
@@ -31,7 +35,7 @@ export type YAMLMapping = Omit<YAMLAstParser.YAMLMapping, 'kind' | 'key' | 'valu
 };
 export type YAMLSequence = Omit<YAMLAstParser.YAMLSequence, 'kind' | 'items' | 'parent'> & {
   kind: Kind.SEQ;
-  items: YAMLNode[];
+  items: Array<YAMLNode | null>;
   parent: YAMLNode;
 };
 

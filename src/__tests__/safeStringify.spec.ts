@@ -1,4 +1,5 @@
 import { safeStringify } from '../safeStringify';
+import { parse } from '../parse';
 
 describe('safeStringify', () => {
   it('should work', () => {
@@ -54,6 +55,19 @@ b: *ref_0
     const obj = { foo: 'bar' };
 
     expect(safeStringify({ a: obj, b: obj }, { noRefs: true })).toEqual(`a:
+  foo: bar
+b:
+  foo: bar
+`);
+  });
+
+  test('blabla', () => {
+    const obj = `foo:
+-
+- a`;
+
+
+    expect(parse(obj)).toEqual(`a:
   foo: bar
 b:
   foo: bar

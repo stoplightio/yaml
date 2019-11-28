@@ -44,7 +44,7 @@ export const parseWithPointers = <T>(value: string, options?: IParseOptions): Ya
   parsed.data = walkAST(
     ast,
     options,
-    options !== undefined && options.ignoreDuplicateKeys === false ? duplicatedMappingKeys : undefined,
+    options !== void 0 && options.ignoreDuplicateKeys === false ? duplicatedMappingKeys : void 0,
   ) as T;
 
   if (duplicatedMappingKeys.length > 0) {

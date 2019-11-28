@@ -9,7 +9,7 @@ export const getLocationForJsonPath: GetLocationForJsonPath<YamlParserResult<unk
   path,
   closest = false,
 ) => {
-  const node = findNodeAtPath(ast, path, { closest, mergeKeys: metadata !== undefined && metadata.mergeKeys === true });
+  const node = findNodeAtPath(ast, path, { closest, mergeKeys: metadata !== void 0 && metadata.mergeKeys === true });
   if (node === void 0) return;
 
   return getLoc(lineMap, {
@@ -72,11 +72,13 @@ function getEndPosition(node: YAMLNode): number {
   return node.endPosition;
 }
 
-function findNodeAtPath(
+export function findNodeAtPath(
   node: YAMLNode,
   path: JsonPath,
   { closest, mergeKeys }: { closest: boolean; mergeKeys: boolean },
 ) {
+  if (path.length === 0) return node;
+
   pathLoop: for (const segment of path) {
     if (!isObject(node)) {
       return closest ? node : void 0;

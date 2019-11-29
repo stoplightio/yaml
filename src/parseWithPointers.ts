@@ -1,4 +1,4 @@
-import { DiagnosticSeverity, IDiagnostic } from '@stoplight/types';
+import { DiagnosticSeverity, IDiagnostic, Optional } from '@stoplight/types';
 import {
   determineScalarType,
   load as loadAST,
@@ -39,17 +39,7 @@ export const parseWithPointers = <T>(value: string, options?: IParseOptions): Ya
 
   if (!ast) return parsed;
 
-  const duplicatedMappingKeys: YAMLNode[] = [];
-
-  parsed.data = walkAST(
-    ast,
-    options,
-    options !== undefined && options.ignoreDuplicateKeys === false ? duplicatedMappingKeys : undefined,
-  ) as T;
-
-  if (duplicatedMappingKeys.length > 0) {
-    parsed.diagnostics.push(...transformDuplicatedMappingKeys(duplicatedMappingKeys, lineMap));
-  }
+  parsed.data = walkAST(ast, options, lineMap, parsed.diagnostics) as T;
 
   if (ast.errors) {
     parsed.diagnostics.push(...transformErrors(ast.errors, lineMap));
@@ -68,8 +58,9 @@ export const parseWithPointers = <T>(value: string, options?: IParseOptions): Ya
 
 export const walkAST = (
   node: YAMLNode | null,
-  options?: IParseOptions,
-  duplicatedMappingKeys?: YAMLNode[],
+  options: Optional<IParseOptions>,
+  lineMap: number[],
+  diagnostics: IDiagnostic[],
 ): unknown => {
   if (node) {
     switch (node.kind) {
@@ -78,19 +69,22 @@ export const walkAST = (
         // note, we don't handle null aka '~' keys on purpose
         const seenKeys: string[] = [];
         const handleMergeKeys = options !== void 0 && options.mergeKeys === true;
-        const handleDuplicates = (options !== void 0 && options.json === false) || duplicatedMappingKeys !== void 0;
+        const yamlMode = options !== void 0 && options.json === false;
+        const handleDuplicates = options !== void 0 && options.ignoreDuplicateKeys === false;
 
         for (const mapping of node.mappings) {
-          const key = mapping.key.value;
+          if (!validateMappingKey(mapping, lineMap, diagnostics, yamlMode)) continue;
 
-          if (handleDuplicates && (!handleMergeKeys || key !== SpecialMappingKeys.MergeKey)) {
-            if (seenKeys.includes(mapping.key.value)) {
-              if (options !== void 0 && options.json === false) {
+          const key = String(getScalarValue(mapping.key));
+
+          if ((yamlMode || handleDuplicates) && (!handleMergeKeys || key !== SpecialMappingKeys.MergeKey)) {
+            if (seenKeys.includes(key)) {
+              if (yamlMode) {
                 throw new Error('Duplicate YAML mapping key encountered');
               }
 
-              if (duplicatedMappingKeys !== void 0) {
-                duplicatedMappingKeys.push(mapping.key);
+              if (handleDuplicates) {
+                diagnostics.push(createYAMLException(mapping.key, lineMap, 'duplicate key'));
               }
             } else {
               seenKeys.push(key);
@@ -99,16 +93,16 @@ export const walkAST = (
 
           // https://yaml.org/type/merge.html merge keys, not a part of YAML spec
           if (handleMergeKeys && key === SpecialMappingKeys.MergeKey) {
-            Object.assign(container, reduceMergeKeys(walkAST(mapping.value, options, duplicatedMappingKeys)));
+            Object.assign(container, reduceMergeKeys(walkAST(mapping.value, options, lineMap, diagnostics)));
           } else {
-            container[mapping.key.value] = walkAST(mapping.value, options, duplicatedMappingKeys);
+            container[mapping.key.value] = walkAST(mapping.value, options, lineMap, diagnostics);
           }
         }
 
         return container;
       }
       case Kind.SEQ:
-        return node.items.map(item => walkAST(item, options, duplicatedMappingKeys));
+        return node.items.map(item => walkAST(item, options, lineMap, diagnostics));
       case Kind.SCALAR:
         return getScalarValue(node);
       case Kind.ANCHOR_REF: {
@@ -116,7 +110,7 @@ export const walkAST = (
           node.value = dereferenceAnchor(node.value, node.referencesAnchor)!;
         }
 
-        return node.value && walkAST(node.value, options, duplicatedMappingKeys);
+        return node.value && walkAST(node.value, options, lineMap, diagnostics);
       }
       default:
         return null;
@@ -233,32 +227,27 @@ const transformErrors = (errors: YAMLException[], lineMap: number[]): IDiagnosti
   return validations;
 };
 
-const transformDuplicatedMappingKeys = (nodes: YAMLNode[], lineMap: number[]): IDiagnostic[] => {
-  const validations: IDiagnostic[] = [];
-  for (const node of nodes) {
-    const startLine = lineForPosition(node.startPosition, lineMap);
-    const endLine = lineForPosition(node.endPosition, lineMap);
+function createYAMLException(node: YAMLNode, lineMap: number[], message: string): IDiagnostic {
+  const startLine = lineForPosition(node.startPosition, lineMap);
+  const endLine = lineForPosition(node.endPosition, lineMap);
 
-    validations.push({
-      code: 'YAMLException',
-      message: 'duplicate key',
-      path: buildJsonPath(node),
-      range: {
-        start: {
-          line: startLine,
-          character: startLine === 0 ? node.startPosition : node.startPosition - lineMap[startLine - 1],
-        },
-        end: {
-          line: endLine,
-          character: endLine === 0 ? node.endPosition : node.endPosition - lineMap[endLine - 1],
-        },
+  return {
+    code: 'YAMLException',
+    message,
+    severity: DiagnosticSeverity.Error,
+    path: buildJsonPath(node),
+    range: {
+      start: {
+        line: startLine,
+        character: startLine === 0 ? node.startPosition : node.startPosition - lineMap[startLine - 1],
       },
-      severity: DiagnosticSeverity.Error,
-    });
-  }
-
-  return validations;
-};
+      end: {
+        line: endLine,
+        character: endLine === 0 ? node.endPosition : node.endPosition - lineMap[endLine - 1],
+      },
+    },
+  };
+}
 
 const reduceMergeKeys = (items: unknown): object | null => {
   if (Array.isArray(items)) {
@@ -268,3 +257,34 @@ const reduceMergeKeys = (items: unknown): object | null => {
 
   return typeof items !== 'object' || items === null ? null : Object(items);
 };
+
+function validateMappingKey(
+  mapping: YAMLMapping,
+  lineMap: number[],
+  diagnostics: IDiagnostic[],
+  yamlMode: boolean,
+): boolean {
+  if (mapping.key.kind !== Kind.SCALAR) {
+    if (!yamlMode) {
+      diagnostics.push(createYAMLException(mapping.key, lineMap, 'mapping key must be a string scalar'));
+    }
+
+    // no exception is thrown, yet the mapping is excluded regardless of mode, as we cannot represent the value anyway
+    return false;
+  }
+
+  if (!yamlMode) {
+    const type = typeof getScalarValue(mapping.key);
+    if (type !== 'string') {
+      diagnostics.push(
+        createYAMLException(
+          mapping.key,
+          lineMap,
+          `mapping key must be a string scalar rather than ${mapping.key.valueObject === null ? 'null' : type}`,
+        ),
+      );
+    }
+  }
+
+  return true;
+}

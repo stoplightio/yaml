@@ -66,6 +66,8 @@ export const parseWithPointers = <T>(value: string, options?: IParseOptions): Ya
   return parsed;
 };
 
+const KEYS = Symbol('object_keys');
+
 export const walkAST = (
   node: YAMLNode | null,
   options?: IParseOptions,
@@ -74,7 +76,8 @@ export const walkAST = (
   if (node) {
     switch (node.kind) {
       case Kind.MAP: {
-        const container = {};
+        const sortKeys = options !== void 0 && options.sortKeys === true;
+        const container = createMapContainer(sortKeys);
         // note, we don't handle null aka '~' keys on purpose
         const seenKeys: string[] = [];
         const handleMergeKeys = options !== void 0 && options.mergeKeys === true;
@@ -99,10 +102,25 @@ export const walkAST = (
 
           // https://yaml.org/type/merge.html merge keys, not a part of YAML spec
           if (handleMergeKeys && key === SpecialMappingKeys.MergeKey) {
-            Object.assign(container, reduceMergeKeys(walkAST(mapping.value, options, duplicatedMappingKeys)));
+            const reduced = reduceMergeKeys(walkAST(mapping.value, options, duplicatedMappingKeys), sortKeys);
+            if (sortKeys && reduced !== null) {
+              for (const reducedKey of Object.keys(reduced)) {
+                pushKey(container, reducedKey);
+              }
+            }
+
+            Object.assign(container, reduced);
           } else {
-            container[mapping.key.value] = walkAST(mapping.value, options, duplicatedMappingKeys);
+            container[key] = walkAST(mapping.value, options, duplicatedMappingKeys);
+
+            if (sortKeys) {
+              pushKey(container, key);
+            }
           }
+        }
+
+        if (KEYS in container) {
+          (container as Partial<{ [KEYS]: Array<Symbol | string> }>)[KEYS]!.push(KEYS);
         }
 
         return container;
@@ -260,11 +278,65 @@ const transformDuplicatedMappingKeys = (nodes: YAMLNode[], lineMap: number[]): I
   return validations;
 };
 
-const reduceMergeKeys = (items: unknown): object | null => {
+const reduceMergeKeys = (items: unknown, sortKeys: boolean): object | null => {
   if (Array.isArray(items)) {
-    // reduceRight is on purpose here! We need to respect the order - the key cannot be overridden..
-    return items.reduceRight((merged, item) => Object.assign(merged, item), {});
+    // reduceRight is on purpose here! We need to respect the order - the key cannot be overridden
+    const reduced = items.reduceRight(
+      sortKeys
+        ? (merged, item) => {
+            const keys = Object.keys(item);
+            for (let i = keys.length - 1; i >= 0; i--) {
+              unshiftKey(merged, keys[i]);
+            }
+
+            return Object.assign(merged, item);
+          }
+        : (merged, item) => Object.assign(merged, item),
+      createMapContainer(sortKeys),
+    );
+
+    if (sortKeys) {
+      reduced[KEYS].push(KEYS);
+    }
+
+    return reduced;
   }
 
   return typeof items !== 'object' || items === null ? null : Object(items);
 };
+
+const traps = {
+  ownKeys(target: object) {
+    return target[KEYS];
+  },
+};
+
+function createMapContainer(sortKeys: boolean): { [key in PropertyKey]: unknown } {
+  if (sortKeys) {
+    const container = new Proxy({}, traps);
+    Reflect.defineProperty(container, KEYS, {
+      value: [],
+    });
+
+    return container;
+  }
+
+  return {};
+}
+
+function deleteKey(container: object, key: string) {
+  const index = key in container ? container[KEYS].indexOf(key) : -1;
+  if (index !== -1) {
+    container[KEYS].splice(index, 1);
+  }
+}
+
+function unshiftKey(container: object, key: string) {
+  deleteKey(container, key);
+  container[KEYS].unshift(key);
+}
+
+function pushKey(container: object, key: string) {
+  deleteKey(container, key);
+  container[KEYS].push(key);
+}

@@ -515,7 +515,7 @@ european-cities: &cities
     });
   });
 
-  describe('keys sorting', () => {
+  describe('keys order', () => {
     it('does not retain the order of keys by default', () => {
       const { data } = parseWithPointers(`foo: true
 bar: false
@@ -526,7 +526,7 @@ bar: false
       expect(Object.keys(data)).toEqual(['0', '1', 'foo', 'bar']);
     });
 
-    describe('when sortKeys option is set to true', () => {
+    describe('when preserveKeyOrder option is set to true', () => {
       it('retains the initial order of keys', () => {
         const { data } = parseWithPointers(
           `foo: true
@@ -534,7 +534,7 @@ bar: false
 "1": false
 "0": true
 `,
-          { sortKeys: true },
+          { preserveKeyOrder: true },
         );
 
         expect(Object.keys(data)).toEqual(['foo', 'bar', '1', '0']);
@@ -551,7 +551,7 @@ bar: false
       "0": true,
       "1": 0,
     }`,
-          { sortKeys: true },
+          { preserveKeyOrder: true },
         );
 
         expect(Object.keys(data)).toEqual(['bar', 'foo', '0', '1']);
@@ -568,7 +568,7 @@ bar: false
           `- 0
 - 1
 - 2`,
-          { sortKeys: true },
+          { preserveKeyOrder: true },
         );
 
         expect(Object.keys(data)).toEqual(['0', '1', '2']);
@@ -576,7 +576,7 @@ bar: false
       });
 
       it('handles empty maps', () => {
-        const { data } = parseWithPointers(`{}`, { sortKeys: true });
+        const { data } = parseWithPointers(`{}`, { preserveKeyOrder: true });
 
         expect(Object.keys(data)).toEqual([]);
       });
@@ -587,7 +587,7 @@ bar: false
   "1": "test"
   hello: 0,
   "0": false`,
-          { sortKeys: true },
+          { preserveKeyOrder: true },
         );
 
         expect(Object.keys(data.foo)).toEqual(['1', 'hello', '0']);
@@ -608,7 +608,7 @@ bar: false
   1: []
   0: true
   label: center/big`,
-          { sortKeys: true },
+          { preserveKeyOrder: true },
         );
 
         expect(Object.keys(data[4])).toEqual(['<<', 'x', '1', '0', 'label']);
@@ -628,7 +628,7 @@ bar: false
   1: []
   0: true
   label: center/big`,
-            { sortKeys: true, mergeKeys: true },
+            { preserveKeyOrder: true, mergeKeys: true },
           );
 
           expect(Object.keys(data[4])).toEqual(['y', 'r', '100', 'z', '1000', '9', 'x', '1', '0', 'label']);

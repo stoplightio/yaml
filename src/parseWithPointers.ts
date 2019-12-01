@@ -76,8 +76,8 @@ export const walkAST = (
   if (node) {
     switch (node.kind) {
       case Kind.MAP: {
-        const sortKeys = options !== void 0 && options.sortKeys === true;
-        const container = createMapContainer(sortKeys);
+        const preserveKeyOrder = options !== void 0 && options.preserveKeyOrder === true;
+        const container = createMapContainer(preserveKeyOrder);
         // note, we don't handle null aka '~' keys on purpose
         const seenKeys: string[] = [];
         const handleMergeKeys = options !== void 0 && options.mergeKeys === true;
@@ -102,8 +102,8 @@ export const walkAST = (
 
           // https://yaml.org/type/merge.html merge keys, not a part of YAML spec
           if (handleMergeKeys && key === SpecialMappingKeys.MergeKey) {
-            const reduced = reduceMergeKeys(walkAST(mapping.value, options, duplicatedMappingKeys), sortKeys);
-            if (sortKeys && reduced !== null) {
+            const reduced = reduceMergeKeys(walkAST(mapping.value, options, duplicatedMappingKeys), preserveKeyOrder);
+            if (preserveKeyOrder && reduced !== null) {
               for (const reducedKey of Object.keys(reduced)) {
                 pushKey(container, reducedKey);
               }
@@ -113,7 +113,7 @@ export const walkAST = (
           } else {
             container[key] = walkAST(mapping.value, options, duplicatedMappingKeys);
 
-            if (sortKeys) {
+            if (preserveKeyOrder) {
               pushKey(container, key);
             }
           }
@@ -278,11 +278,11 @@ const transformDuplicatedMappingKeys = (nodes: YAMLNode[], lineMap: number[]): I
   return validations;
 };
 
-const reduceMergeKeys = (items: unknown, sortKeys: boolean): object | null => {
+const reduceMergeKeys = (items: unknown, preserveKeyOrder: boolean): object | null => {
   if (Array.isArray(items)) {
     // reduceRight is on purpose here! We need to respect the order - the key cannot be overridden
     const reduced = items.reduceRight(
-      sortKeys
+      preserveKeyOrder
         ? (merged, item) => {
             const keys = Object.keys(item);
             for (let i = keys.length - 1; i >= 0; i--) {
@@ -292,10 +292,10 @@ const reduceMergeKeys = (items: unknown, sortKeys: boolean): object | null => {
             return Object.assign(merged, item);
           }
         : (merged, item) => Object.assign(merged, item),
-      createMapContainer(sortKeys),
+      createMapContainer(preserveKeyOrder),
     );
 
-    if (sortKeys) {
+    if (preserveKeyOrder) {
       reduced[KEYS].push(KEYS);
     }
 
@@ -311,8 +311,8 @@ const traps = {
   },
 };
 
-function createMapContainer(sortKeys: boolean): { [key in PropertyKey]: unknown } {
-  if (sortKeys) {
+function createMapContainer(preserveKeyOrder: boolean): { [key in PropertyKey]: unknown } {
+  if (preserveKeyOrder) {
     const container = new Proxy({}, traps);
     Reflect.defineProperty(container, KEYS, {
       value: [],

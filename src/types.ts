@@ -5,7 +5,7 @@ import { Kind, ScalarType } from '@stoplight/yaml-ast-parser';
 export interface IParseOptions extends YAMLAstParser.LoadOptions {
   json?: boolean; // if true, properties can be overridden, otherwise throws
   mergeKeys?: boolean;
-  sortKeys?: boolean;
+  preserveKeyOrder?: boolean;
 }
 
 export type YAMLBaseNode<K extends Kind> = Omit<YAMLAstParser.YAMLNode, 'kind' | 'parent'> & {

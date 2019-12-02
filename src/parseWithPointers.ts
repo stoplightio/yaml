@@ -227,6 +227,57 @@ const transformErrors = (errors: YAMLException[], lineMap: number[]): IDiagnosti
   return validations;
 };
 
+const reduceMergeKeys = (items: unknown): object | null => {
+  if (Array.isArray(items)) {
+    // reduceRight is on purpose here! We need to respect the order - the key cannot be overridden..
+    return items.reduceRight((merged, item) => Object.assign(merged, item), {});
+  }
+
+  return typeof items !== 'object' || items === null ? null : Object(items);
+};
+
+function validateMappingKey(
+  mapping: YAMLMapping,
+  lineMap: number[],
+  diagnostics: IDiagnostic[],
+  yamlMode: boolean,
+): boolean {
+  if (mapping.key.kind !== Kind.SCALAR) {
+    diagnostics.push(
+      createYAMLIncompatibilityException(mapping.key, lineMap, 'mapping key must be a string scalar', yamlMode),
+    );
+
+    // no exception is thrown, yet the mapping is excluded regardless of mode, as we cannot represent the value anyway
+    return false;
+  }
+
+  const type = typeof getScalarValue(mapping.key);
+  if (type !== 'string') {
+    diagnostics.push(
+      createYAMLIncompatibilityException(
+        mapping.key,
+        lineMap,
+        `mapping key must be a string scalar rather than ${mapping.key.valueObject === null ? 'null' : type}`,
+        yamlMode,
+      ),
+    );
+  }
+
+  return true;
+}
+
+function createYAMLIncompatibilityException(
+  node: YAMLNode,
+  lineMap: number[],
+  message: string,
+  yamlMode: boolean,
+): IDiagnostic {
+  const exception = createYAMLException(node, lineMap, message);
+  exception.code = 'YAMLIncompatibleValue';
+  exception.severity = yamlMode ? DiagnosticSeverity.Hint : DiagnosticSeverity.Error;
+  return exception;
+}
+
 function createYAMLException(node: YAMLNode, lineMap: number[], message: string): IDiagnostic {
   const startLine = lineForPosition(node.startPosition, lineMap);
   const endLine = lineForPosition(node.endPosition, lineMap);
@@ -247,44 +298,4 @@ function createYAMLException(node: YAMLNode, lineMap: number[], message: string)
       },
     },
   };
-}
-
-const reduceMergeKeys = (items: unknown): object | null => {
-  if (Array.isArray(items)) {
-    // reduceRight is on purpose here! We need to respect the order - the key cannot be overridden..
-    return items.reduceRight((merged, item) => Object.assign(merged, item), {});
-  }
-
-  return typeof items !== 'object' || items === null ? null : Object(items);
-};
-
-function validateMappingKey(
-  mapping: YAMLMapping,
-  lineMap: number[],
-  diagnostics: IDiagnostic[],
-  yamlMode: boolean,
-): boolean {
-  if (mapping.key.kind !== Kind.SCALAR) {
-    if (!yamlMode) {
-      diagnostics.push(createYAMLException(mapping.key, lineMap, 'mapping key must be a string scalar'));
-    }
-
-    // no exception is thrown, yet the mapping is excluded regardless of mode, as we cannot represent the value anyway
-    return false;
-  }
-
-  if (!yamlMode) {
-    const type = typeof getScalarValue(mapping.key);
-    if (type !== 'string') {
-      diagnostics.push(
-        createYAMLException(
-          mapping.key,
-          lineMap,
-          `mapping key must be a string scalar rather than ${mapping.key.valueObject === null ? 'null' : type}`,
-        ),
-      );
-    }
-  }
-
-  return true;
 }

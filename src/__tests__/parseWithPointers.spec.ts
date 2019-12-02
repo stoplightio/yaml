@@ -558,7 +558,7 @@ european-cities: &cities
 
       expect(diagnostics).toEqual([
         {
-          code: 'YAMLException',
+          code: 'YAMLIncompatibleValue',
           message: 'mapping key must be a string scalar rather than number',
           path: ['responses', '400'],
           range: {
@@ -574,7 +574,7 @@ european-cities: &cities
           severity: DiagnosticSeverity.Error,
         },
         {
-          code: 'YAMLException',
+          code: 'YAMLIncompatibleValue',
           message: 'mapping key must be a string scalar rather than boolean',
           path: ['responses', 'true'],
           range: {
@@ -590,7 +590,7 @@ european-cities: &cities
           severity: DiagnosticSeverity.Error,
         },
         {
-          code: 'YAMLException',
+          code: 'YAMLIncompatibleValue',
           message: 'mapping key must be a string scalar rather than null',
           path: ['responses', 'null'],
           range: {
@@ -613,7 +613,7 @@ european-cities: &cities
 
       expect(diagnostics).toEqual([
         {
-          code: 'YAMLException',
+          code: 'YAMLIncompatibleValue',
           message: 'mapping key must be a string scalar',
           path: [],
           range: {
@@ -629,7 +629,7 @@ european-cities: &cities
           severity: DiagnosticSeverity.Error,
         },
         {
-          code: 'YAMLException',
+          code: 'YAMLIncompatibleValue',
           message: 'mapping key must be a string scalar',
           path: [],
           range: {
@@ -645,7 +645,7 @@ european-cities: &cities
           severity: DiagnosticSeverity.Error,
         },
         {
-          code: 'YAMLException',
+          code: 'YAMLIncompatibleValue',
           message: 'mapping key must be a string scalar rather than number',
           path: ['2'],
           range: {
@@ -664,16 +664,114 @@ european-cities: &cities
     });
 
     describe('when json mode is disabled', () => {
-      it('does not warn about non-string scalar mapping keys', () => {
+      it('still warns about non-string scalar mapping keys', () => {
         const { diagnostics } = parseWithPointers(responses, { json: false });
 
-        expect(diagnostics).toEqual([]);
+        expect(diagnostics).toEqual([
+          {
+            code: 'YAMLIncompatibleValue',
+            message: 'mapping key must be a string scalar rather than number',
+            path: ['responses', '400'],
+            range: {
+              end: {
+                character: 5,
+                line: 2,
+              },
+              start: {
+                character: 2,
+                line: 2,
+              },
+            },
+            severity: DiagnosticSeverity.Hint,
+          },
+          {
+            code: 'YAMLIncompatibleValue',
+            message: 'mapping key must be a string scalar rather than boolean',
+            path: ['responses', 'true'],
+            range: {
+              end: {
+                character: 6,
+                line: 3,
+              },
+              start: {
+                character: 2,
+                line: 3,
+              },
+            },
+            severity: DiagnosticSeverity.Hint,
+          },
+          {
+            code: 'YAMLIncompatibleValue',
+            message: 'mapping key must be a string scalar rather than null',
+            path: ['responses', 'null'],
+            range: {
+              end: {
+                character: 6,
+                line: 4,
+              },
+              start: {
+                character: 2,
+                line: 4,
+              },
+            },
+            severity: DiagnosticSeverity.Hint,
+          },
+        ]);
       });
 
-      it('does not warn about complex mapping keys', () => {
+      it('still warns about complex mapping keys', () => {
         const { diagnostics } = parseWithPointers(complex, { json: false });
 
-        expect(diagnostics).toStrictEqual([]);
+        expect(diagnostics).toEqual([
+          {
+            code: 'YAMLIncompatibleValue',
+            message: 'mapping key must be a string scalar',
+            path: [],
+            range: {
+              end: {
+                character: 3,
+                line: 0,
+              },
+              start: {
+                character: 0,
+                line: 0,
+              },
+            },
+            severity: DiagnosticSeverity.Hint,
+          },
+          {
+            code: 'YAMLIncompatibleValue',
+            message: 'mapping key must be a string scalar',
+            path: [],
+            range: {
+              end: {
+                character: 8,
+                line: 1,
+              },
+              start: {
+                character: 0,
+                line: 1,
+              },
+            },
+            severity: DiagnosticSeverity.Hint,
+          },
+          {
+            code: 'YAMLIncompatibleValue',
+            message: 'mapping key must be a string scalar rather than number',
+            path: ['2'],
+            range: {
+              end: {
+                character: 1,
+                line: 2,
+              },
+              start: {
+                character: 0,
+                line: 2,
+              },
+            },
+            severity: DiagnosticSeverity.Hint,
+          },
+        ]);
       });
     });
   });

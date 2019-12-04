@@ -677,4 +677,126 @@ european-cities: &cities
       });
     });
   });
+
+  describe('keys order', () => {
+    it('does not retain the order of keys by default', () => {
+      const { data } = parseWithPointers(`foo: true
+bar: false
+"1": false
+"0": true
+`);
+
+      expect(Object.keys(data)).toEqual(['0', '1', 'foo', 'bar']);
+    });
+
+    describe('when preserveKeyOrder option is set to true', () => {
+      it('retains the initial order of keys', () => {
+        const { data } = parseWithPointers(
+          `foo: true
+bar: false
+"1": false
+"0": true
+`,
+          { preserveKeyOrder: true },
+        );
+
+        expect(Object.keys(data)).toEqual(['foo', 'bar', '1', '0']);
+      });
+
+      it('handles duplicate properties', () => {
+        const { data } = parseWithPointers(
+          `{
+      foo: true,
+      bar: false,
+      "0": 0,
+      foo: null,
+      "1": false,
+      "0": true,
+      "1": 0,
+    }`,
+          { preserveKeyOrder: true },
+        );
+
+        expect(Object.keys(data)).toEqual(['bar', 'foo', '0', '1']);
+        expect(data).toStrictEqual({
+          bar: false,
+          foo: null,
+          1: 0,
+          0: true,
+        });
+      });
+
+      it('does not touch sequences', () => {
+        const { data } = parseWithPointers(
+          `- 0
+- 1
+- 2`,
+          { preserveKeyOrder: true },
+        );
+
+        expect(Object.keys(data)).toEqual(['0', '1', '2']);
+        expect(Object.getOwnPropertySymbols(data)).toEqual([]);
+      });
+
+      it('handles empty maps', () => {
+        const { data } = parseWithPointers(`{}`, { preserveKeyOrder: true });
+
+        expect(Object.keys(data)).toEqual([]);
+      });
+
+      it('works for nested maps', () => {
+        const { data } = parseWithPointers(
+          `foo:
+  "1": "test"
+  hello: 0,
+  "0": false`,
+          { preserveKeyOrder: true },
+        );
+
+        expect(Object.keys(data.foo)).toEqual(['1', 'hello', '0']);
+      });
+    });
+
+    describe('merge keys handling', () => {
+      it('treats merge keys as regular mappings by default', () => {
+        const { data } = parseWithPointers(
+          `---
+- &CENTER { x: 1, y: 2 }
+- &LEFT { x: 0, y: 2 }
+- &BIG { r: 10 }
+- &SMALL { r: 1 }
+- 
+  << : [ *BIG, *LEFT, *SMALL ]
+  x: 1
+  1: []
+  0: true
+  label: center/big`,
+          { preserveKeyOrder: true },
+        );
+
+        expect(Object.keys(data[4])).toEqual(['<<', 'x', '1', '0', 'label']);
+      });
+
+      describe('when mergeKeys option is set to true', () => {
+        it('takes mappings included as a result of merging into account', () => {
+          const { data } = parseWithPointers(
+            `---
+- &CENTER { x: 1, y: 4 }
+- &LEFT { x: 0, z: null, 1000: false, y: 2}
+- &BIG { r: 10, 100: true }
+- &SMALL { r: 1, 9: true }
+- 
+  << : [ *CENTER, *BIG, *LEFT, *SMALL ]
+  x: 1
+  1: []
+  0: true
+  label: center/big`,
+            { preserveKeyOrder: true, mergeKeys: true },
+          );
+
+          expect(Object.keys(data[4])).toEqual(['y', 'r', '100', 'z', '1000', '9', 'x', '1', '0', 'label']);
+        });
+      });
+    });
+  });
 });

@@ -243,24 +243,28 @@ function validateMappingKey(
   yamlMode: boolean,
 ): boolean {
   if (mapping.key.kind !== Kind.SCALAR) {
-    diagnostics.push(
-      createYAMLIncompatibilityException(mapping.key, lineMap, 'mapping key must be a string scalar', yamlMode),
-    );
+    if (!yamlMode) {
+      diagnostics.push(
+        createYAMLIncompatibilityException(mapping.key, lineMap, 'mapping key must be a string scalar', yamlMode),
+      );
+    }
 
     // no exception is thrown, yet the mapping is excluded regardless of mode, as we cannot represent the value anyway
     return false;
   }
 
-  const type = typeof getScalarValue(mapping.key);
-  if (type !== 'string') {
-    diagnostics.push(
-      createYAMLIncompatibilityException(
-        mapping.key,
-        lineMap,
-        `mapping key must be a string scalar rather than ${mapping.key.valueObject === null ? 'null' : type}`,
-        yamlMode,
-      ),
-    );
+  if (!yamlMode) {
+    const type = typeof getScalarValue(mapping.key);
+    if (type !== 'string') {
+      diagnostics.push(
+        createYAMLIncompatibilityException(
+          mapping.key,
+          lineMap,
+          `mapping key must be a string scalar rather than ${mapping.key.valueObject === null ? 'null' : type}`,
+          yamlMode,
+        ),
+      );
+    }
   }
 
   return true;

@@ -515,6 +515,169 @@ european-cities: &cities
     });
   });
 
+  describe('invalid (not JSON-ish) mapping keys', () => {
+    const complex = `[2]: test
+{2:null}: false
+2: test`;
+
+    const responses = `responses:
+  "200": {}
+  400: {}
+  true: false
+  null: 2`;
+
+    it('always excludes any complex types', () => {
+      const { data: yamlData } = parseWithPointers(complex, { json: false });
+      const { data: jsonData } = parseWithPointers(complex);
+
+      expect(yamlData).toStrictEqual({
+        '2': 'test',
+      });
+
+      expect(yamlData).toStrictEqual(jsonData);
+    });
+
+    it('always includes all scalar mapping keys', () => {
+      const { data: yamlData } = parseWithPointers(responses, { json: false });
+      const { data: jsonData } = parseWithPointers(responses);
+
+      expect(yamlData).toStrictEqual({
+        responses: {
+          '200': {},
+          '400': {},
+          null: 2,
+          true: false,
+        },
+      });
+
+      expect(yamlData).toStrictEqual(jsonData);
+    });
+
+    it('warns about non-string scalar mapping keys', () => {
+      const { diagnostics } = parseWithPointers(responses);
+
+      expect(diagnostics).toEqual([
+        {
+          code: 'YAMLIncompatibleValue',
+          message: 'mapping key must be a string scalar rather than number',
+          path: ['responses', '400'],
+          range: {
+            end: {
+              character: 5,
+              line: 2,
+            },
+            start: {
+              character: 2,
+              line: 2,
+            },
+          },
+          severity: DiagnosticSeverity.Error,
+        },
+        {
+          code: 'YAMLIncompatibleValue',
+          message: 'mapping key must be a string scalar rather than boolean',
+          path: ['responses', 'true'],
+          range: {
+            end: {
+              character: 6,
+              line: 3,
+            },
+            start: {
+              character: 2,
+              line: 3,
+            },
+          },
+          severity: DiagnosticSeverity.Error,
+        },
+        {
+          code: 'YAMLIncompatibleValue',
+          message: 'mapping key must be a string scalar rather than null',
+          path: ['responses', 'null'],
+          range: {
+            end: {
+              character: 6,
+              line: 4,
+            },
+            start: {
+              character: 2,
+              line: 4,
+            },
+          },
+          severity: DiagnosticSeverity.Error,
+        },
+      ]);
+    });
+
+    it('warns about complex mapping keys', () => {
+      const { diagnostics } = parseWithPointers(complex);
+
+      expect(diagnostics).toEqual([
+        {
+          code: 'YAMLIncompatibleValue',
+          message: 'mapping key must be a string scalar',
+          path: [],
+          range: {
+            end: {
+              character: 3,
+              line: 0,
+            },
+            start: {
+              character: 0,
+              line: 0,
+            },
+          },
+          severity: DiagnosticSeverity.Error,
+        },
+        {
+          code: 'YAMLIncompatibleValue',
+          message: 'mapping key must be a string scalar',
+          path: [],
+          range: {
+            end: {
+              character: 8,
+              line: 1,
+            },
+            start: {
+              character: 0,
+              line: 1,
+            },
+          },
+          severity: DiagnosticSeverity.Error,
+        },
+        {
+          code: 'YAMLIncompatibleValue',
+          message: 'mapping key must be a string scalar rather than number',
+          path: ['2'],
+          range: {
+            end: {
+              character: 1,
+              line: 2,
+            },
+            start: {
+              character: 0,
+              line: 2,
+            },
+          },
+          severity: DiagnosticSeverity.Error,
+        },
+      ]);
+    });
+
+    describe('when json mode is disabled', () => {
+      it('does not warn about non-string scalar mapping keys', () => {
+        const { diagnostics } = parseWithPointers(responses, { json: false });
+
+        expect(diagnostics).toEqual([]);
+      });
+
+      it('does not warn about complex mapping keys', () => {
+        const { diagnostics } = parseWithPointers(complex, { json: false });
+
+        expect(diagnostics).toStrictEqual([]);
+      });
+    });
+  });
+
   describe('keys order', () => {
     it('does not retain the order of keys by default', () => {
       const { data } = parseWithPointers(`foo: true

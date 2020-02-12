@@ -4,9 +4,16 @@ describe('safeStringify', () => {
   it('should work', () => {
     const val = { foo: true };
 
-    expect(safeStringify(val)).toEqual(`foo: true
-`);
-    expect(safeStringify('foo: true')).toEqual('foo: true');
+    expect(safeStringify(val)).toEqual('foo: true\n');
+  });
+
+  it('should stringify strings correctly', () => {
+    expect(safeStringify('foo: true')).toEqual("'foo: true'\n");
+    expect(safeStringify('')).toEqual("''\n");
+  });
+
+  it.each([0, null, false])('should stringify falsy value: %s', value => {
+    expect(safeStringify(value)).toEqual(`${value}\n`);
   });
 
   it('should respect lineWidth for multi-line strings', () => {

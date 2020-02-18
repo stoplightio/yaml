@@ -7,9 +7,9 @@ describe('safeStringify', () => {
     expect(safeStringify(val)).toEqual('foo: true\n');
   });
 
-  it('should stringify strings correctly', () => {
-    expect(safeStringify('foo: true')).toEqual("'foo: true'\n");
-    expect(safeStringify('')).toEqual("''\n");
+  it('should not stringify strings twice', () => {
+    expect(safeStringify('foo: true')).toEqual('foo: true');
+    expect(safeStringify('')).toEqual('');
   });
 
   it.each([0, null, false])('should stringify falsy value: %s', value => {

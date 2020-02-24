@@ -257,6 +257,20 @@ european-cities: &cities
 
       expect(() => JSON.stringify(result.data)).not.toThrow();
     });
+
+    test('insane edge case #2', () => {
+      const result = parseWithPointers(`&ref_1
+a:
+  b: &ref_2
+    c:
+      - *ref_1
+  d:
+    *ref_2
+
+`);
+      expect(result.data).toMatchSnapshot();
+      expect(() => JSON.stringify(result.data)).not.toThrow();
+    });
   });
 
   describe('duplicate keys', () => {

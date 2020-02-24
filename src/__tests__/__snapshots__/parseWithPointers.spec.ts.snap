@@ -1,5 +1,35 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`yaml parser dereferencing anchor refs insane edge case #2 1`] = `
+Object {
+  "a": Object {
+    "b": Object {
+      "c": Array [
+        Object {
+          "a": Object {
+            "b": Object {
+              "c": Array [
+                null,
+              ],
+            },
+            "d": Object {
+              "c": Array [
+                null,
+              ],
+            },
+          },
+        },
+      ],
+    },
+    "d": Object {
+      "c": Array [
+        null,
+      ],
+    },
+  },
+}
+`;
+
 exports[`yaml parser dereferencing anchor refs insane edge case 1`] = `
 Array [
   Array [

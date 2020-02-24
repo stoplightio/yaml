@@ -124,11 +124,11 @@ export const walkAST = (
       case Kind.SCALAR:
         return getScalarValue(node);
       case Kind.ANCHOR_REF: {
-        if (isObject(node.value) && isCircularAnchorRef(node)) {
+        if (isObject(node.value)) {
           node.value = dereferenceAnchor(node.value, node.referencesAnchor)!;
         }
 
-        return node.value && walkAST(node.value, options, lineMap, diagnostics);
+        return walkAST(node.value!, options, lineMap, diagnostics);
       }
       default:
         return null;
@@ -138,7 +138,7 @@ export const walkAST = (
   return node;
 };
 
-const isCircularAnchorRef = (anchorRef: YAMLAnchorReference) => {
+const isSelfReferencingAnchorRef = (anchorRef: YAMLAnchorReference) => {
   const { referencesAnchor } = anchorRef;
   let node: YAMLNode | undefined = anchorRef;
   // tslint:disable-next-line:no-conditional-assignment
@@ -171,7 +171,7 @@ const dereferenceAnchor = (node: YAMLNode | null, anchorId: string): YAMLNode | 
     case Kind.SCALAR:
       return node;
     case Kind.ANCHOR_REF:
-      if (isObject(node.value) && isCircularAnchorRef(node)) {
+      if (isObject(node.value) && isSelfReferencingAnchorRef(node)) {
         return null;
       }
 

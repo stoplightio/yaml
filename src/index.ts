@@ -1,4 +1,5 @@
 export * from './buildJsonPath';
+export * from './dereferenceAnchor';
 export * from './getJsonPathForPosition';
 export * from './getLocationForJsonPath';
 export * from './lineForPosition';

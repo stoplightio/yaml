@@ -266,7 +266,6 @@ a:
       - *ref_1
   d:
     *ref_2
-
 `);
       expect(result.data).toMatchSnapshot();
       expect(() => JSON.stringify(result.data)).not.toThrow();

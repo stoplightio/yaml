@@ -584,7 +584,7 @@ a:
               line: 2,
             },
           },
-          severity: DiagnosticSeverity.Error,
+          severity: DiagnosticSeverity.Warning,
         },
         {
           code: 'YAMLIncompatibleValue',
@@ -600,7 +600,7 @@ a:
               line: 3,
             },
           },
-          severity: DiagnosticSeverity.Error,
+          severity: DiagnosticSeverity.Warning,
         },
         {
           code: 'YAMLIncompatibleValue',
@@ -616,7 +616,7 @@ a:
               line: 4,
             },
           },
-          severity: DiagnosticSeverity.Error,
+          severity: DiagnosticSeverity.Warning,
         },
       ]);
     });
@@ -639,7 +639,7 @@ a:
               line: 0,
             },
           },
-          severity: DiagnosticSeverity.Error,
+          severity: DiagnosticSeverity.Warning,
         },
         {
           code: 'YAMLIncompatibleValue',
@@ -655,7 +655,7 @@ a:
               line: 1,
             },
           },
-          severity: DiagnosticSeverity.Error,
+          severity: DiagnosticSeverity.Warning,
         },
         {
           code: 'YAMLIncompatibleValue',
@@ -671,7 +671,7 @@ a:
               line: 2,
             },
           },
-          severity: DiagnosticSeverity.Error,
+          severity: DiagnosticSeverity.Warning,
         },
       ]);
     });

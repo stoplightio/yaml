@@ -299,7 +299,7 @@ function createYAMLIncompatibilityException(
 ): IDiagnostic {
   const exception = createYAMLException(node, lineMap, message);
   exception.code = 'YAMLIncompatibleValue';
-  exception.severity = yamlMode ? DiagnosticSeverity.Hint : DiagnosticSeverity.Error;
+  exception.severity = yamlMode ? DiagnosticSeverity.Hint : DiagnosticSeverity.Warning;
   return exception;
 }
 

@@ -7,3 +7,4 @@ export * from './parse';
 export * from './parseWithPointers';
 export * from './safeStringify';
 export * from './types';
+export * from './trapAccess';

@@ -11,6 +11,7 @@ import { buildJsonPath } from './buildJsonPath';
 import { SpecialMappingKeys } from './consts';
 import { dereferenceAnchor } from './dereferenceAnchor';
 import { lineForPosition } from './lineForPosition';
+import { KEYS, trapAccess } from './trapAccess';
 import { IParseOptions, Kind, ScalarType, YAMLMapping, YAMLNode, YamlParserResult, YAMLScalar } from './types';
 import { isObject } from './utils';
 
@@ -47,8 +48,6 @@ export const parseWithPointers = <T>(value: string, options?: IParseOptions): Ya
 
   return parsed;
 };
-
-const KEYS = Symbol('object_keys');
 
 export const walkAST = (
   node: YAMLNode | null,
@@ -221,15 +220,9 @@ const reduceMergeKeys = (items: unknown, preserveKeyOrder: boolean): object | nu
   return typeof items !== 'object' || items === null ? null : Object(items);
 };
 
-const traps = {
-  ownKeys(target: object) {
-    return target[KEYS];
-  },
-};
-
 function createMapContainer(preserveKeyOrder: boolean): { [key in PropertyKey]: unknown } {
   if (preserveKeyOrder) {
-    const container = new Proxy({}, traps);
+    const container = trapAccess({});
     Reflect.defineProperty(container, KEYS, {
       value: [],
     });

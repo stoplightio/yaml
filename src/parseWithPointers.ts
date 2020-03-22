@@ -1,4 +1,4 @@
-import { DiagnosticSeverity, IDiagnostic, Optional } from '@stoplight/types';
+import { DiagnosticSeverity, Dictionary, IDiagnostic, Optional } from '@stoplight/types';
 import {
   determineScalarType,
   load as loadAST,
@@ -7,11 +7,11 @@ import {
   parseYamlInteger,
   YAMLException,
 } from '@stoplight/yaml-ast-parser';
+import createOrderedObject, { getOrder } from 'ordered-object-literal';
 import { buildJsonPath } from './buildJsonPath';
 import { SpecialMappingKeys } from './consts';
 import { dereferenceAnchor } from './dereferenceAnchor';
 import { lineForPosition } from './lineForPosition';
-import { KEYS, trapAccess } from './trapAccess';
 import { IParseOptions, Kind, ScalarType, YAMLMapping, YAMLNode, YamlParserResult, YAMLScalar } from './types';
 import { isObject } from './utils';
 
@@ -88,11 +88,6 @@ export const walkAST = (
           // https://yaml.org/type/merge.html merge keys, not a part of YAML spec
           if (handleMergeKeys && key === SpecialMappingKeys.MergeKey) {
             const reduced = reduceMergeKeys(walkAST(mapping.value, options, lineMap, diagnostics), preserveKeyOrder);
-            if (preserveKeyOrder && reduced !== null) {
-              for (const reducedKey of Object.keys(reduced)) {
-                pushKey(container, reducedKey);
-              }
-            }
 
             Object.assign(container, reduced);
           } else {
@@ -102,10 +97,6 @@ export const walkAST = (
               pushKey(container, key);
             }
           }
-        }
-
-        if (KEYS in container) {
-          (container as Partial<{ [KEYS]: Array<Symbol | string> }>)[KEYS]!.push(KEYS);
         }
 
         return container;
@@ -200,19 +191,18 @@ const reduceMergeKeys = (items: unknown, preserveKeyOrder: boolean): object | nu
       preserveKeyOrder
         ? (merged, item) => {
             const keys = Object.keys(item);
+
+            Object.assign(merged, item);
+
             for (let i = keys.length - 1; i >= 0; i--) {
               unshiftKey(merged, keys[i]);
             }
 
-            return Object.assign(merged, item);
+            return merged;
           }
         : (merged, item) => Object.assign(merged, item),
       createMapContainer(preserveKeyOrder),
     );
-
-    if (preserveKeyOrder) {
-      reduced[KEYS].push(KEYS);
-    }
 
     return reduced;
   }
@@ -221,33 +211,26 @@ const reduceMergeKeys = (items: unknown, preserveKeyOrder: boolean): object | nu
 };
 
 function createMapContainer(preserveKeyOrder: boolean): { [key in PropertyKey]: unknown } {
-  if (preserveKeyOrder) {
-    const container = trapAccess({});
-    Reflect.defineProperty(container, KEYS, {
-      value: [],
-    });
-
-    return container;
-  }
-
-  return {};
+  return preserveKeyOrder ? createOrderedObject({}) : {};
 }
 
-function deleteKey(container: object, key: string) {
-  const index = key in container ? container[KEYS].indexOf(key) : -1;
+function deleteKey(container: Dictionary<unknown>, key: string) {
+  if (!(key in container)) return;
+  const order = getOrder(container)!;
+  const index = order.indexOf(key);
   if (index !== -1) {
-    container[KEYS].splice(index, 1);
+    order.splice(index, 1);
   }
 }
 
-function unshiftKey(container: object, key: string) {
+function unshiftKey(container: Dictionary<unknown>, key: string) {
   deleteKey(container, key);
-  container[KEYS].unshift(key);
+  getOrder(container)!.unshift(key);
 }
 
-function pushKey(container: object, key: string) {
+function pushKey(container: Dictionary<unknown>, key: string) {
   deleteKey(container, key);
-  container[KEYS].push(key);
+  getOrder(container)!.push(key);
 }
 
 function validateMappingKey(

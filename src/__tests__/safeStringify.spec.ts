@@ -66,4 +66,10 @@ b:
   foo: bar
 `);
   });
+
+  test('should stringify strings containing numbers with leading 0 (but are not octals) correctly', () => {
+    const obj = { value: '012345678' };
+
+    expect(safeStringify(obj, { noRefs: true })).toEqual(`value: '012345678'\n`);
+  });
 });

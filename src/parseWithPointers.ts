@@ -1,3 +1,4 @@
+import createOrderedObject, { getOrder } from '@stoplight/ordered-object-literal';
 import { DiagnosticSeverity, Dictionary, IDiagnostic, Optional } from '@stoplight/types';
 import {
   determineScalarType,
@@ -7,7 +8,6 @@ import {
   parseYamlInteger,
   YAMLException,
 } from '@stoplight/yaml-ast-parser';
-import createOrderedObject, { getOrder } from 'ordered-object-literal';
 import { buildJsonPath } from './buildJsonPath';
 import { SpecialMappingKeys } from './consts';
 import { dereferenceAnchor } from './dereferenceAnchor';

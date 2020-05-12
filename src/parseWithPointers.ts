@@ -3,9 +3,9 @@ import { DiagnosticSeverity, Dictionary, IDiagnostic, Optional } from '@stopligh
 import {
   determineScalarType,
   load as loadAST,
+  parseYamlBigInteger,
   parseYamlBoolean,
   parseYamlFloat,
-  parseYamlInteger,
   YAMLException,
 } from '@stoplight/yaml-ast-parser';
 import { buildJsonPath } from './buildJsonPath';
@@ -120,7 +120,7 @@ export const walkAST = (
   return node;
 };
 
-function getScalarValue(node: YAMLScalar): number | null | boolean | string | void {
+function getScalarValue(node: YAMLScalar): number | bigint | null | boolean | string | void {
   switch (determineScalarType(node)) {
     case ScalarType.null:
       return null;
@@ -129,7 +129,7 @@ function getScalarValue(node: YAMLScalar): number | null | boolean | string | vo
     case ScalarType.bool:
       return parseYamlBoolean(node.value);
     case ScalarType.int:
-      return parseYamlInteger(node.value);
+      return parseYamlBigInteger(node.value);
     case ScalarType.float:
       return parseYamlFloat(node.value);
   }

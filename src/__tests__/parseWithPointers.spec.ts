@@ -812,4 +812,8 @@ bar: false
       });
     });
   });
+
+  test.each(['6917528997577384320', '9223372036854775807'])('big int %s', value => {
+    expect(parseWithPointers(`${value}`).data).toEqual(BigInt(value));
+  });
 });

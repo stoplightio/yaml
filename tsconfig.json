@@ -1,5 +1,6 @@
 {
   "extends": "./node_modules/@stoplight/scripts/tsconfig.json",
+  "lib": ["es2020", "dom"],
 
   // target all ts files
   "include": ["."]

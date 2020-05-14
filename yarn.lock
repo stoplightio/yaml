@@ -1588,10 +1588,10 @@
     "@types/json-schema" "^7.0.4"
     utility-types "^3.10.0"
 
-"@stoplight/yaml-ast-parser@0.0.46":
-  version "0.0.46"
-  resolved "https://registry.yarnpkg.com/@stoplight/yaml-ast-parser/-/yaml-ast-parser-0.0.46.tgz#ee9c8da3d8b89ae9007bfe015daf34ee68db9bd5"
-  integrity sha512-eKVeNt6n3U/nA2hjwUsyLOC48DaMiwRx/qrLPzt9Oie+ke4lPA2Jm8ozUMcleVdV5JyZNpG3UhBcSb3PTlt0Kw==
+"@stoplight/yaml-ast-parser@0.0.47":
+  version "0.0.47"
+  resolved "https://registry.yarnpkg.com/@stoplight/yaml-ast-parser/-/yaml-ast-parser-0.0.47.tgz#4836760c32092fa015dbcf5da7c0ff90cb7e4443"
+  integrity sha512-UVy6l5Nb0NvoWjP7t05HrWFdu1oc7WY0eWa1BNPEb5/aL+EBQwNKA/36PLOe8L62oGS0s7EcEgTyxmcmVjb9/Q==
 
 "@storybook/addon-actions@4.0.11":
   version "4.0.11"

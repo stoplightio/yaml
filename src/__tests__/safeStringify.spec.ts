@@ -81,4 +81,10 @@ b:
 - *ref_0
 `);
   });
+
+  test('should stringify big integers', () => {
+    const obj = { value: BigInt('1267650600228229401496703205376') };
+
+    expect(safeStringify(obj)).toEqual(`value: 1267650600228229401496703205376\n`);
+  });
 });

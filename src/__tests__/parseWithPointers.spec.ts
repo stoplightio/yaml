@@ -813,7 +813,17 @@ bar: false
     });
   });
 
-  test.each(['6917528997577384320', '9223372036854775807'])('big int %s', value => {
-    expect(parseWithPointers(`${value}`).data).toEqual(BigInt(value));
+  describe.each(['6917528997577384320', '9223372036854775807'])('parsing big int %s', value => {
+    it('given bigInt option not set, treats value as number', () => {
+      expect(parseWithPointers(`${value}`).data).toEqual(Number(value));
+    });
+
+    it('given bigInt option set to false, treats value as number', () => {
+      expect(parseWithPointers(`${value}`, { bigInt: false }).data).toEqual(Number(value));
+    });
+
+    it('given bigInt option set to true, treats value as big int', () => {
+      expect(parseWithPointers(`${value}`, { bigInt: true }).data).toEqual(BigInt(value));
+    });
   });
 });

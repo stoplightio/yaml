@@ -4,6 +4,7 @@ import { Kind, ScalarType } from '@stoplight/yaml-ast-parser';
 
 export interface IParseOptions extends YAMLAstParser.LoadOptions {
   json?: boolean; // if true, properties can be overridden, otherwise throws
+  bigInt?: boolean;
   mergeKeys?: boolean;
   preserveKeyOrder?: boolean;
 }

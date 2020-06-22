@@ -103,8 +103,11 @@ export const walkAST = (
       }
       case Kind.SEQ:
         return node.items.map(item => walkAST(item, options, lineMap, diagnostics));
-      case Kind.SCALAR:
-        return getScalarValue(node);
+      case Kind.SCALAR: {
+        const bigInt = options !== void 0 && options.bigInt === true;
+        const value = getScalarValue(node);
+        return !bigInt && typeof value === 'bigint' ? Number(value) : value;
+      }
       case Kind.ANCHOR_REF: {
         if (isObject(node.value)) {
           node.value = dereferenceAnchor(node.value, node.referencesAnchor)!;

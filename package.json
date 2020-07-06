@@ -40,7 +40,7 @@
   },
   "dependencies": {
     "@stoplight/ordered-object-literal": "^1.0.1",
-    "@stoplight/types": "^11.8.0",
+    "@stoplight/types": "^11.9.0",
     "@stoplight/yaml-ast-parser": "0.0.48",
     "tslib": "^1.12.0"
   },

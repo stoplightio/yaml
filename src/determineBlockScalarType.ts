@@ -9,24 +9,24 @@ export type BlockChomping = 'strip' | 'keep' | 'clip';
 
 export type BlockScalarType = {
   /*
-   [170] 	c-l+literal(n) 	::= 	“|” c-b-block-header(m,t)
-                                l-literal-content(n+m,t)
+    [170]  c-l+literal(n)  ::=   “|” c-b-block-header(m,t)
+                                  l-literal-content(n+m,t)
 
-   [174] 	c-l+folded(n) 	::= 	“>” c-b-block-header(m,t)
-                                l-folded-content(n+m,t)
+    [174]  c-l+folded(n)   ::=   “>” c-b-block-header(m,t)
+                                  l-folded-content(n+m,t)
    */
   style: BlockScalarStyle;
 
   /*
-   [164] 	c-chomping-indicator(t) 	::= 	“-”           ⇒ t = strip
-                                          “+”           ⇒ t = keep
-                                          /* Empty *\/  ⇒ t = clip
+    [164]  c-chomping-indicator(t)   ::=   “-”           ⇒ t = strip
+                                           “+”           ⇒ t = keep
+                                           /* Empty *\/  ⇒ t = clip
   */
   chomping: BlockChomping;
   // null if none provided, we do not do any detection **on purpose** as we want to get the _authored_ input
   /*
-   [163] 	c-indentation-indicator(m) 	::= 	ns-dec-digit  ⇒ m  = ns-dec-digit - #x30
-                                            /* Empty *\/  ⇒ m  = auto-detect() // this is the part we do not care about
+    [163]  c-indentation-indicator(m)  ::=   ns-dec-digit  ⇒ m  = ns-dec-digit - #x30
+                                             /* Empty *\/  ⇒ m  = auto-detect() // this is the part we do not care about
   */
   indentation: '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' | null;
 };
@@ -43,18 +43,18 @@ const C_CHOMPING_INDICATOR = /[-+]?/;
 const C_INDENTATION_INDICATOR = /[1-9]?/; // 1 cause it's ns-dec-digit - #x30, so 0-9 without 0
 
 /*
- [31]  s-space 	::= 	#x20 /* SP *\/
- [32]  s-tab 	  ::= 	#x9  /* TAB *\/
- [33]  s-white 	::= 	s-space | s-tab
+  [31]  s-space   ::=   #x20 /* SP *\/
+  [32]  s-tab     ::=   #x9  /* TAB *\/
+  [33]  s-white   ::=   s-space | s-tab
 */
 // const S_SPACE_SIGN = /\u0020/;
 // const S_TAB = /\u0009/;
 const S_WHITE = /^[\u0020\u0009]$/;
 
 /*
- [24] 	b-line-feed 	      ::= 	#xA    /* LF *\/
- [25] 	b-carriage-return 	::= 	#xD    /* CR *\/
- [26] 	b-char 	            ::= 	b-line-feed | b-carriage-return
+  [24]  b-line-feed         ::=   #xA    /* LF *\/
+  [25]  b-carriage-return   ::=   #xD    /* CR *\/
+  [26]  b-char              ::=   b-line-feed | b-carriage-return
 */
 // const B_LINE_FEED_SIGN = /\u000A/;
 // const B_CARRIAGE_RETURN_SIGN = /\u000D/;
@@ -89,11 +89,11 @@ export const determineBlockScalarType = (
 };
 
 /*
- [162] 	c-b-block-header(m,t) 	::= 	( ( c-indentation-indicator(m)
-                                          c-chomping-indicator(t) )
-                                      | ( c-chomping-indicator(t)
-                                          c-indentation-indicator(m) ) )
-                                      s-b-comment
+  [162]  c-b-block-header(m,t)   ::=   ( ( c-indentation-indicator(m)
+                                           c-chomping-indicator(t) )
+                                       | ( c-chomping-indicator(t)
+                                           c-indentation-indicator(m) ) )
+                                       s-b-comment
  */
 const C_B_BLOCK_HEADER = new RegExp( // we ignore s-b-comment
   [

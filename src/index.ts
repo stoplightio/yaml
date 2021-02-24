@@ -1,5 +1,7 @@
 export * from './buildJsonPath';
 export * from './dereferenceAnchor';
+export * from './determineBlockScalarType';
+export * from './findNodeAtPath';
 export * from './getJsonPathForPosition';
 export * from './getLocationForJsonPath';
 export * from './lineForPosition';

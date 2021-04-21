@@ -1,5 +1,5 @@
 import createOrderedObject, { getOrder } from '@stoplight/ordered-object-literal';
-import { DiagnosticSeverity, Dictionary, IDiagnostic, Optional } from '@stoplight/types';
+import { DiagnosticSeverity, Dictionary, IDiagnostic, IPosition, IRange, Optional } from '@stoplight/types';
 import {
   determineScalarType,
   load as loadAST,
@@ -164,6 +164,9 @@ function getLineLength(lineMap: number[], line: number) {
 
 const transformErrors = (errors: YAMLException[], lineMap: number[]): IDiagnostic[] => {
   const validations: IDiagnostic[] = [];
+  let possiblyUnexpectedFlow = -1;
+  let i = 0;
+
   for (const error of errors) {
     const validation: IDiagnostic = {
       code: error.name,
@@ -181,7 +184,19 @@ const transformErrors = (errors: YAMLException[], lineMap: number[]): IDiagnosti
       },
     };
 
+    const isBrokenFlow = error.reason === 'missed comma between flow collection entries';
+    if (isBrokenFlow) {
+      possiblyUnexpectedFlow = possiblyUnexpectedFlow === -1 ? i : possiblyUnexpectedFlow;
+    } else if (possiblyUnexpectedFlow !== -1) {
+      (validations[possiblyUnexpectedFlow].range as Dictionary<IPosition, keyof IRange>).end = validation.range.end;
+      validations[possiblyUnexpectedFlow].message = 'invalid mixed usage of block and flow styles';
+      validations.length = possiblyUnexpectedFlow + 1;
+      i = validations.length;
+      possiblyUnexpectedFlow = -1;
+    }
+
     validations.push(validation);
+    i++;
   }
 
   return validations;

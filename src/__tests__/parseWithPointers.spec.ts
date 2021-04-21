@@ -34,7 +34,7 @@ describe('yaml parser', () => {
     expect(result.data).toEqual(HugeJSON);
   });
 
-  it('parses string according to YAML 1.2 spec', () => {
+  test('parses string according to YAML 1.2 spec', () => {
     const { data } = parseWithPointers(spectral481);
     expect(data).toHaveProperty(
       'components.schemas.RandomRequest.properties.implicit_string_date.example',
@@ -131,6 +131,88 @@ prop2: true
             end: {
               character: 7,
               line: 3,
+            },
+          },
+        },
+      ]);
+    });
+
+    test('unclosed flow sequence', () => {
+      const result = parseWithPointers(`austrian-cities: [
+- Vienna  
+- Graz
+- Linz
+- Salzburg
+`);
+      expect(result.diagnostics).toEqual([
+        {
+          severity: DiagnosticSeverity.Error,
+          message: 'invalid mixed usage of block and flow styles',
+          code: 'YAMLException',
+          range: {
+            start: {
+              character: 0,
+              line: 1,
+            },
+            end: {
+              character: 0,
+              line: 5,
+            },
+          },
+        },
+        {
+          severity: DiagnosticSeverity.Error,
+          message: 'unexpected end of the stream within a flow collection',
+          code: 'YAMLException',
+          range: {
+            start: {
+              character: 0,
+              line: 5,
+            },
+            end: {
+              character: 0,
+              line: 5,
+            },
+          },
+        },
+      ]);
+    });
+
+    test('unclosed flow mapping', () => {
+      const result = parseWithPointers(`austrian-cities: {
+- Vienna  
+- Graz
+- Linz
+- Salzburg
+`);
+      expect(result.diagnostics).toEqual([
+        {
+          severity: DiagnosticSeverity.Error,
+          message: 'invalid mixed usage of block and flow styles',
+          code: 'YAMLException',
+          range: {
+            start: {
+              character: 0,
+              line: 1,
+            },
+            end: {
+              character: 0,
+              line: 5,
+            },
+          },
+        },
+        {
+          severity: DiagnosticSeverity.Error,
+          message: 'unexpected end of the stream within a flow collection',
+          code: 'YAMLException',
+          range: {
+            start: {
+              character: 0,
+              line: 5,
+            },
+            end: {
+              character: 0,
+              line: 5,
             },
           },
         },

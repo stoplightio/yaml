@@ -1,12 +1,13 @@
 import { IParserResult, Optional } from '@stoplight/types';
 import * as YAMLAstParser from '@stoplight/yaml-ast-parser';
-import { Kind, ScalarType } from '@stoplight/yaml-ast-parser';
+import { DumpOptions, Kind, ScalarType } from '@stoplight/yaml-ast-parser';
 
 export interface IParseOptions extends YAMLAstParser.LoadOptions {
   json?: boolean; // if true, properties can be overridden, otherwise throws
   bigInt?: boolean;
   mergeKeys?: boolean;
   preserveKeyOrder?: boolean;
+  attachComments?: boolean;
 }
 
 export type YAMLBaseNode<K extends Kind> = Omit<YAMLAstParser.YAMLNode, 'kind' | 'parent'> & {
@@ -43,6 +44,10 @@ export type YAMLSequence = Omit<YAMLAstParser.YAMLSequence, 'kind' | 'items' | '
 
 export type YAMLNode = YAMLAnchorReference | YAMLIncludeReference | YAMLScalar | YAMLMap | YAMLMapping | YAMLSequence;
 
-export type YamlParserResult<T> = IParserResult<T, YAMLNode, number[], IParseOptions>;
+export type YamlComments = NonNullable<DumpOptions['comments']>;
+
+export type YamlParserResult<T> = IParserResult<T, YAMLNode, number[], IParseOptions> & {
+  comments: YamlComments;
+};
 
 export { Kind, ScalarType };

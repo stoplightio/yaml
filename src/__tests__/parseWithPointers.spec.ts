@@ -34,6 +34,180 @@ describe('yaml parser', () => {
     expect(result.data).toEqual(HugeJSON);
   });
 
+  test('given attachComments set to true, parse with comments', () => {
+    const document = fs.readFileSync(path.join(__dirname, './fixtures/openapi-with-comments.yaml'), 'utf8');
+    const result = parseWithPointers(document, { attachComments: true });
+
+    expect(result.comments).toStrictEqual({
+      '#': [
+        {
+          placement: 'leading',
+          value: ' my openapi document',
+        },
+        {
+          value: ' Paths section describes the endpoints available in the API',
+          placement: 'between',
+          between: ['servers', 'paths'],
+        },
+        {
+          value: ' Components section for reusable schemas',
+          placement: 'between',
+          between: ['paths', 'components'],
+        },
+      ],
+      '#/components/schemas': [
+        {
+          value: ' Schema for creating a new book entry',
+          placement: 'between',
+          between: ['Book', 'NewBook'],
+        },
+        {
+          value: ' Schema definition for a book',
+          placement: 'leading',
+        },
+      ],
+      '#/components/schemas/Book/properties': [
+        {
+          value: ' Indicates if the book is currently available',
+          placement: 'between',
+          between: ['isbn', 'available'],
+        },
+      ],
+      '#/components/schemas/Book/properties/author/type': [
+        {
+          value: " The author's name",
+          placement: 'before-eol',
+        },
+      ],
+      '#/components/schemas/Book/properties/id/type': [
+        {
+          value: ' Unique identifier for the book',
+          placement: 'before-eol',
+        },
+      ],
+      '#/components/schemas/Book/properties/isbn/type': [
+        {
+          value: ' The ISBN number',
+          placement: 'before-eol',
+        },
+      ],
+      '#/components/schemas/Book/properties/title/type': [
+        {
+          value: ' The title of the book',
+          placement: 'before-eol',
+        },
+      ],
+      '#/components/schemas/NewBook': [
+        {
+          value: ' Below the schema definition',
+          placement: 'before-eol',
+        },
+      ],
+      '#/components/schemas/NewBook/properties/title/description': [
+        {
+          value: ' Inline comment for',
+          placement: 'before-eol',
+        },
+      ],
+      '#/info': [
+        {
+          value: ' Metadata about the API',
+          placement: 'before-eol',
+        },
+      ],
+      '#/info/title': [
+        {
+          value: ' The name of your API',
+          placement: 'before-eol',
+        },
+      ],
+      '#/info/version': [
+        {
+          value: ' API version',
+          placement: 'before-eol',
+        },
+      ],
+      '#/openapi': [
+        {
+          value: ' Specifies the OpenAPI Specification version',
+          placement: 'before-eol',
+        },
+      ],
+      '#/paths/~1books': [
+        {
+          value: ' Endpoint to create a new book entry',
+          placement: 'between',
+          between: ['get', 'post'],
+        },
+      ],
+      '#/paths/~1books/get': [
+        {
+          value: ' A more detailed description of the operation',
+          placement: 'between',
+          between: ['summary', 'description'],
+        },
+        {
+          value: ' Retrieves a list of books from the inventory',
+          placement: 'before-eol',
+        },
+      ],
+      '#/paths/~1books/get/responses': [
+        {
+          value: ' Describes the possible responses',
+          placement: 'before-eol',
+        },
+      ],
+      '#/paths/~1books/get/responses/200': [
+        {
+          value: ' HTTP status code for a successful response',
+          placement: 'before-eol',
+        },
+      ],
+      '#/paths/~1books/get/responses/200/content/application~1json': [
+        {
+          value: ' Media type',
+          placement: 'before-eol',
+        },
+      ],
+      '#/paths/~1books/get/responses/200/content/application~1json/schema/items/$ref': [
+        {
+          value: ' References the Book schema',
+          placement: 'before-eol',
+        },
+      ],
+      '#/paths/~1books/post/requestBody': [
+        {
+          value: ' Describes the request body',
+          placement: 'before-eol',
+        },
+      ],
+      '#/paths/~1books/post/requestBody/content/application~1json/schema/$ref': [
+        {
+          value: ' Schema for the new book data',
+          placement: 'before-eol',
+        },
+      ],
+      '#/paths/~1books/post/responses/201': [
+        {
+          value: ' Status code for a successful creation',
+          placement: 'before-eol',
+        },
+      ],
+      '#/servers': [
+        {
+          value: ' Defines the API server and base URL',
+          placement: 'before-eol',
+        },
+      ],
+      '#/servers/0/url': [
+        {
+          value: ' Base URL for the API endpoints',
+          placement: 'before-eol',
+        },
+      ],
+    });
+  });
+
   test('parses string according to YAML 1.2 spec', () => {
     const { data } = parseWithPointers(spectral481);
     expect(data).toHaveProperty(

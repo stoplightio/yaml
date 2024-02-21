@@ -104,6 +104,28 @@ Array [
 exports[`yaml parser parse diverse 1`] = `
 Object {
   "ast": Object {
+    "comments": Array [
+      Object {
+        "endPosition": 46,
+        "startPosition": 4,
+        "value": " <- yaml supports comments, json does not",
+      },
+      Object {
+        "endPosition": 89,
+        "startPosition": 47,
+        "value": " did you know you can embed json in yaml?",
+      },
+      Object {
+        "endPosition": 122,
+        "startPosition": 90,
+        "value": " try uncommenting the next line",
+      },
+      Object {
+        "endPosition": 139,
+        "startPosition": 123,
+        "value": " { foo: 'bar' }",
+      },
+    ],
     "endPosition": 442,
     "errors": Array [],
     "kind": 2,
@@ -480,6 +502,7 @@ to save space",
     "parent": null,
     "startPosition": 141,
   },
+  "comments": Object {},
   "data": Object {
     "content": "Or we
 can auto

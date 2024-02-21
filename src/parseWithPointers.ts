@@ -1,18 +1,28 @@
 import createOrderedObject, { getOrder } from '@stoplight/ordered-object-literal';
-import { DiagnosticSeverity, Dictionary, IDiagnostic, IPosition, IRange, Optional } from '@stoplight/types';
+import { DiagnosticSeverity, Dictionary, IDiagnostic, IPosition, IRange } from '@stoplight/types';
 import {
   determineScalarType,
   load as loadAST,
   parseYamlBigInteger,
   parseYamlBoolean,
   parseYamlFloat,
+  YAMLDocument,
   YAMLException,
 } from '@stoplight/yaml-ast-parser';
 import { buildJsonPath } from './buildJsonPath';
 import { SpecialMappingKeys } from './consts';
 import { dereferenceAnchor } from './dereferenceAnchor';
 import { lineForPosition } from './lineForPosition';
-import { IParseOptions, Kind, ScalarType, YAMLMapping, YAMLNode, YamlParserResult, YAMLScalar } from './types';
+import {
+  IParseOptions,
+  Kind,
+  ScalarType,
+  YamlComments,
+  YAMLMapping,
+  YAMLNode,
+  YamlParserResult,
+  YAMLScalar,
+} from './types';
 import { isObject } from './utils';
 
 export const parseWithPointers = <T>(value: string, options?: IParseOptions): YamlParserResult<T | undefined> => {
@@ -28,11 +38,27 @@ export const parseWithPointers = <T>(value: string, options?: IParseOptions): Ya
     data: undefined,
     diagnostics: [],
     metadata: options,
+    comments: {},
   };
 
   if (!ast) return parsed;
 
-  parsed.data = walkAST(ast, options, lineMap, parsed.diagnostics) as T;
+  const normalizedOptions = normalizeOptions(options);
+
+  const comments = new Comments(
+    parsed.comments,
+    Comments.mapComments(normalizedOptions.attachComments && ast.comments ? ast.comments : [], lineMap),
+    ast,
+    lineMap,
+    '#',
+  );
+
+  const ctx = {
+    lineMap,
+    diagnostics: parsed.diagnostics,
+  };
+
+  parsed.data = walkAST(ctx, ast, comments, normalizedOptions) as T;
 
   if (ast.errors) {
     parsed.diagnostics.push(...transformErrors(ast.errors, lineMap));
@@ -49,27 +75,43 @@ export const parseWithPointers = <T>(value: string, options?: IParseOptions): Ya
   return parsed;
 };
 
-export const walkAST = (
+type WalkContext = {
+  lineMap: number[];
+  diagnostics: IDiagnostic[];
+};
+
+const TILDE_REGEXP = /~/g;
+const SLASH_REGEXP = /\//g;
+
+function encodeSegment(input: string) {
+  return input.replace(TILDE_REGEXP, '~0').replace(SLASH_REGEXP, '~1');
+}
+
+const walkAST = (
+  ctx: WalkContext,
   node: YAMLNode | null,
-  options: Optional<IParseOptions>,
-  lineMap: number[],
-  diagnostics: IDiagnostic[],
+  comments: Comments,
+  options: ReturnType<typeof normalizeOptions>,
 ): unknown => {
   if (node) {
     switch (node.kind) {
       case Kind.MAP: {
-        const preserveKeyOrder = options !== void 0 && options.preserveKeyOrder === true;
+        const mapComments = comments.enter(node);
+
+        const { lineMap, diagnostics } = ctx;
+        const { preserveKeyOrder, ignoreDuplicateKeys, json, mergeKeys } = options;
         const container = createMapContainer(preserveKeyOrder);
         // note, we don't handle null aka '~' keys on purpose
         const seenKeys: string[] = [];
-        const handleMergeKeys = options !== void 0 && options.mergeKeys === true;
-        const yamlMode = options !== void 0 && options.json === false;
-        const handleDuplicates = options !== void 0 && options.ignoreDuplicateKeys === false;
+        const handleMergeKeys = mergeKeys;
+        const yamlMode = !json;
+        const handleDuplicates = !ignoreDuplicateKeys;
 
         for (const mapping of node.mappings) {
           if (!validateMappingKey(mapping, lineMap, diagnostics, yamlMode)) continue;
 
           const key = String(getScalarValue(mapping.key));
+          const mappingComments = mapComments.enter(mapping, encodeSegment(key));
 
           if ((yamlMode || handleDuplicates) && (!handleMergeKeys || key !== SpecialMappingKeys.MergeKey)) {
             if (seenKeys.includes(key)) {
@@ -87,33 +129,49 @@ export const walkAST = (
 
           // https://yaml.org/type/merge.html merge keys, not a part of YAML spec
           if (handleMergeKeys && key === SpecialMappingKeys.MergeKey) {
-            const reduced = reduceMergeKeys(walkAST(mapping.value, options, lineMap, diagnostics), preserveKeyOrder);
+            const reduced = reduceMergeKeys(walkAST(ctx, mapping.value, mappingComments, options), preserveKeyOrder);
 
             Object.assign(container, reduced);
           } else {
-            container[key] = walkAST(mapping.value, options, lineMap, diagnostics);
+            container[key] = walkAST(ctx, mapping.value, mappingComments, options);
 
             if (preserveKeyOrder) {
               pushKey(container, key);
             }
           }
+
+          mappingComments.attachComments();
         }
 
+        mapComments.attachComments();
         return container;
       }
-      case Kind.SEQ:
-        return node.items.map(item => walkAST(item, options, lineMap, diagnostics));
+      case Kind.SEQ: {
+        const nodeComments = comments.enter(node);
+        const container = node.items.map((item, i) => {
+          if (item !== null) {
+            const sequenceItemComments = nodeComments.enter(item, i);
+            const walked = walkAST(ctx, item, sequenceItemComments, options);
+            sequenceItemComments.attachComments();
+            return walked;
+          } else {
+            return null;
+          }
+        });
+
+        nodeComments.attachComments();
+        return container;
+      }
       case Kind.SCALAR: {
-        const bigInt = options !== void 0 && options.bigInt === true;
         const value = getScalarValue(node);
-        return !bigInt && typeof value === 'bigint' ? Number(value) : value;
+        return !options.bigInt && typeof value === 'bigint' ? Number(value) : value;
       }
       case Kind.ANCHOR_REF: {
         if (isObject(node.value)) {
           node.value = dereferenceAnchor(node.value, node.referencesAnchor)!;
         }
 
-        return walkAST(node.value!, options, lineMap, diagnostics);
+        return walkAST(ctx, node.value!, comments, options);
       }
       default:
         return null;
@@ -298,23 +356,246 @@ function createYAMLIncompatibilityException(
 }
 
 function createYAMLException(node: YAMLNode, lineMap: number[], message: string): IDiagnostic {
-  const startLine = lineForPosition(node.startPosition, lineMap);
-  const endLine = lineForPosition(node.endPosition, lineMap);
-
   return {
     code: 'YAMLException',
     message,
     severity: DiagnosticSeverity.Error,
     path: buildJsonPath(node),
-    range: {
-      start: {
-        line: startLine,
-        character: startLine === 0 ? node.startPosition : node.startPosition - lineMap[startLine - 1],
-      },
-      end: {
-        line: endLine,
-        character: endLine === 0 ? node.endPosition : node.endPosition - lineMap[endLine - 1],
-      },
+    range: getRange(lineMap, node.startPosition, node.endPosition),
+  };
+}
+
+function getRange(lineMap: number[], startPosition: number, endPosition: number): IRange {
+  const startLine = lineForPosition(startPosition, lineMap);
+  const endLine = lineForPosition(endPosition, lineMap);
+
+  return {
+    start: {
+      line: startLine,
+      character: startLine === 0 ? startPosition : startPosition - lineMap[startLine - 1],
     },
+    end: {
+      line: endLine,
+      character: endLine === 0 ? endPosition : endPosition - lineMap[endLine - 1],
+    },
+  };
+}
+
+type MappedComment = { value: string; range: IRange; startPosition: number; endPosition: number };
+class Comments {
+  private readonly comments: MappedComment[];
+
+  constructor(
+    private readonly attachedComments: YamlComments,
+    comments: MappedComment[],
+    private readonly node: YAMLNode,
+    private readonly lineMap: number[],
+    private readonly pointer: string,
+  ) {
+    if (comments.length === 0) {
+      this.comments = [];
+    } else {
+      const startPosition = this.getStartPosition(node);
+      const endPosition = this.getEndPosition(node);
+      const startLine = lineForPosition(startPosition, this.lineMap);
+      const endLine = lineForPosition(endPosition, this.lineMap);
+
+      const matchingComments = [];
+      for (let i = comments.length - 1; i >= 0; i--) {
+        const comment = comments[i];
+        if (comment.range.start.line >= startLine && comment.range.end.line <= endLine) {
+          matchingComments.push(comment);
+          comments.splice(i, 1);
+        }
+      }
+
+      this.comments = matchingComments;
+    }
+  }
+
+  protected getStartPosition(node: YAMLNode) {
+    if (node.parent === null) {
+      return 0;
+    }
+
+    return node.kind === Kind.MAPPING ? node.key.startPosition : node.startPosition;
+  }
+
+  protected getEndPosition(node: YAMLNode): number {
+    switch (node.kind) {
+      case Kind.MAPPING:
+        return node.value === null ? node.endPosition : this.getEndPosition(node.value);
+      case Kind.MAP:
+        return node.mappings.length === 0 ? node.endPosition : node.mappings[node.mappings.length - 1].endPosition;
+      case Kind.SEQ: {
+        if (node.items.length === 0) {
+          return node.endPosition;
+        }
+
+        const lastItem = node.items[node.items.length - 1];
+        return lastItem === null ? node.endPosition : lastItem.endPosition;
+      }
+      default:
+        return node.endPosition;
+    }
+  }
+
+  public static mapComments(comments: NonNullable<YAMLDocument['comments']>, lineMap: number[]) {
+    return comments.map(comment => ({
+      value: comment.value,
+      range: getRange(lineMap, comment.startPosition, comment.endPosition),
+      startPosition: comment.startPosition,
+      endPosition: comment.endPosition,
+    }));
+  }
+
+  public enter(node: YAMLNode, key?: string | number) {
+    return new Comments(
+      this.attachedComments,
+      this.comments,
+      node,
+      this.lineMap,
+      key === void 0 ? this.pointer : `${this.pointer}/${key}`,
+    );
+  }
+
+  public static isLeading(node: YAMLNode, startPosition: number) {
+    switch (node.kind) {
+      case Kind.MAP:
+        return node.mappings.length === 0 || node.mappings[0].startPosition > startPosition;
+      case Kind.SEQ: {
+        if (node.items.length === 0) {
+          return true;
+        }
+
+        const firstItem = node.items[0];
+        return firstItem === null || firstItem.startPosition > startPosition;
+      }
+      case Kind.MAPPING:
+        return node.value === null || node.value.startPosition > startPosition;
+      default:
+        return false;
+    }
+  }
+
+  public static isTrailing(node: YAMLNode, endPosition: number) {
+    switch (node.kind) {
+      case Kind.MAP:
+        return node.mappings.length > 0 && endPosition > node.mappings[node.mappings.length - 1].endPosition;
+      case Kind.SEQ:
+        if (node.items.length === 0) {
+          return false;
+        }
+
+        const lastItem = node.items[node.items.length - 1];
+        return lastItem !== null && endPosition > lastItem.endPosition;
+      case Kind.MAPPING:
+        return node.value !== null && endPosition > node.value.endPosition;
+      default:
+        return false;
+    }
+  }
+
+  public static findBetween(node: YAMLNode, startPosition: number, endPosition: number): [string, string] | null {
+    switch (node.kind) {
+      case Kind.MAP: {
+        let left;
+        for (const mapping of node.mappings) {
+          if (startPosition > mapping.startPosition) {
+            left = mapping.key.value;
+          } else if (left !== void 0 && mapping.startPosition > endPosition) {
+            return [left, mapping.key.value];
+          }
+        }
+
+        return null;
+      }
+      case Kind.SEQ: {
+        let left;
+        for (let i = 0; i < node.items.length; i++) {
+          const item = node.items[i];
+          if (item === null) continue;
+          if (startPosition > item.startPosition) {
+            left = String(i);
+          } else if (left !== void 0 && item.startPosition > endPosition) {
+            return [left, String(i)];
+          }
+        }
+
+        return null;
+      }
+      default:
+        return null;
+    }
+  }
+
+  public isBeforeEOL(comment: MappedComment) {
+    return (
+      this.node.kind === Kind.SCALAR ||
+      (this.node.kind === Kind.MAPPING &&
+        comment.range.end.line === lineForPosition(this.node.key.endPosition, this.lineMap))
+    );
+  }
+
+  public attachComments() {
+    if (this.comments.length === 0) return;
+
+    const attachedComments = (this.attachedComments[this.pointer] = this.attachedComments[this.pointer] || []);
+
+    for (const comment of this.comments) {
+      if (this.isBeforeEOL(comment)) {
+        attachedComments.push({
+          value: comment.value,
+          placement: 'before-eol',
+        });
+      } else if (Comments.isLeading(this.node, comment.startPosition)) {
+        attachedComments.push({
+          value: comment.value,
+          placement: 'leading',
+        });
+      } else if (Comments.isTrailing(this.node, comment.endPosition)) {
+        attachedComments.push({
+          value: comment.value,
+          placement: 'trailing',
+        });
+      } else {
+        const between = Comments.findBetween(this.node, comment.startPosition, comment.endPosition);
+        if (between !== null) {
+          attachedComments.push({
+            value: comment.value,
+            placement: 'between',
+            between,
+          });
+        } else {
+          attachedComments.push({
+            value: comment.value,
+            placement: 'trailing',
+          });
+        }
+      }
+    }
+  }
+}
+
+function normalizeOptions(options?: IParseOptions) {
+  if (options === void 0) {
+    return {
+      attachComments: false,
+      preserveKeyOrder: false,
+      bigInt: false,
+      mergeKeys: false,
+      json: true,
+      ignoreDuplicateKeys: false,
+    };
+  }
+
+  return {
+    ...options,
+    attachComments: options.attachComments === true,
+    preserveKeyOrder: options.preserveKeyOrder === true,
+    bigInt: options.bigInt === true,
+    mergeKeys: options.mergeKeys === true,
+    json: options.json !== false,
+    ignoreDuplicateKeys: options.ignoreDuplicateKeys !== false,
   };
 }

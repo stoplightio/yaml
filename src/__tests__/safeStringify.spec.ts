@@ -1,3 +1,6 @@
+import * as fs from 'fs';
+import * as path from 'path';
+import { parseWithPointers } from '../parseWithPointers';
 import { safeStringify } from '../safeStringify';
 
 describe('safeStringify', () => {
@@ -14,6 +17,13 @@ describe('safeStringify', () => {
 
   it.each([0, null, false])('should stringify falsy value: %s', value => {
     expect(safeStringify(value)).toEqual(`${value}\n`);
+  });
+
+  it('should dump comments back', () => {
+    const document = fs.readFileSync(path.join(__dirname, './fixtures/openapi-with-comments.yaml'), 'utf8');
+    const result = parseWithPointers(document, { attachComments: true });
+
+    expect(safeStringify(result.data, { comments: result.comments })).toEqual(document);
   });
 
   it('should respect lineWidth for multi-line strings', () => {

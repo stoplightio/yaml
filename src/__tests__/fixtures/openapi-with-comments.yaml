@@ -1,0 +1,67 @@
+# my openapi document
+openapi: 3.0.0 # Specifies the OpenAPI Specification version
+info: # Metadata about the API
+  title: Bookstore Inventory API # The name of your API
+  description: API for managing a bookstore's inventory.
+  version: 1.0.0 # API version
+servers: # Defines the API server and base URL
+  - url: 'https://api.bookstore.com/v1' # Base URL for the API endpoints
+# Paths section describes the endpoints available in the API
+paths:
+  /books:
+    get: # Retrieves a list of books from the inventory
+      summary: List all books
+      # A more detailed description of the operation
+      description: Retrieve a list of books available in the bookstore inventory.
+      responses: # Describes the possible responses
+        '200': # HTTP status code for a successful response
+          description: A JSON array of book objects.
+          content:
+            application/json: # Media type
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Book' # References the Book schema
+    # Endpoint to create a new book entry
+    post:
+      summary: Add a new book
+      description: Add a new book to the bookstore inventory.
+      requestBody: # Describes the request body
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NewBook' # Schema for the new book data
+      responses:
+        '201': # Status code for a successful creation
+          description: Book created successfully.
+# Components section for reusable schemas
+components:
+  schemas:
+    # Schema definition for a book
+    Book:
+      type: object
+      properties:
+        id:
+          type: string # Unique identifier for the book
+          description: The book's unique identifier.
+        title:
+          type: string # The title of the book
+          description: The title of the book.
+        author:
+          type: string # The author's name
+          description: The author of the book.
+        isbn:
+          type: string # The ISBN number
+          description: The International Standard Book Number.
+        # Indicates if the book is currently available
+        available:
+          type: boolean
+          description: Whether the book is currently available for sale.
+    # Schema for creating a new book entry
+    NewBook: # Below the schema definition
+      type: object
+      properties:
+        title:
+          type: string
+          description: The title of the book. # Inline comment for

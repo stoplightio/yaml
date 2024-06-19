@@ -35,7 +35,7 @@
     "release.dryRun": "sl-scripts release --dry-run --debug",
     "test": "vitest run",
     "test.prod": "yarn lint && vitest run --coverage",
-    "test.update": "vitest run --updateSnapshot",
+    "test.update": "vitest run --update",
     "test.watch": "vitest",
     "prepare": "husky"
   },

@@ -1,6 +1,7 @@
-import { describe, expect, it } from 'vitest';
 import * as fs from 'fs';
 import * as path from 'path';
+import { describe, expect, it } from 'vitest';
+
 import { parseWithPointers } from '../parseWithPointers';
 import { safeStringify } from '../safeStringify';
 
@@ -53,9 +54,9 @@ Neque porro quisquam est, qui dolorem ipsum quia dolor sit amet, consectetur, ad
 
     expect(safeStringify(val, { lineWidth: Infinity })).toEqual(`description: |-
 ${description
-      .split('\n')
-      .map(part => `  ${part}`)
-      .join('\n')}
+  .split('\n')
+  .map(part => `  ${part}`)
+  .join('\n')}
 `);
   });
 

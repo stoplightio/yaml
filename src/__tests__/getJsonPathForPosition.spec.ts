@@ -1,8 +1,9 @@
 import * as fs from 'fs';
 import { join } from 'path';
+import { describe, expect, it } from 'vitest';
+
 import { getJsonPathForPosition } from '../getJsonPathForPosition';
 import { parseWithPointers } from '../parseWithPointers';
-import { describe, expect, it } from 'vitest';
 
 const petStore = fs.readFileSync(join(__dirname, './fixtures/petstore.oas2.yaml'), 'utf-8');
 const demo = fs.readFileSync(join(__dirname, './fixtures/demo.yaml'), 'utf-8');

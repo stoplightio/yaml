@@ -1,5 +1,6 @@
-import { lineForPosition } from '../lineForPosition';
 import { describe, expect, it } from 'vitest';
+
+import { lineForPosition } from '../lineForPosition';
 
 describe('lineForPosition', () => {
   it('simple fixture', () => {
@@ -18,32 +19,8 @@ describe('lineForPosition', () => {
 
   it('diverse fixture', () => {
     const lines = [
-      4,
-      49,
-      94,
-      129,
-      148,
-      149,
-      157,
-      169,
-      203,
-      211,
-      235,
-      245,
-      256,
-      266,
-      281,
-      292,
-      312,
-      334,
-      353,
-      368,
-      393,
-      394,
-      417,
-      431,
-      443,
-      484,
+      4, 49, 94, 129, 148, 149, 157, 169, 203, 211, 235, 245, 256, 266, 281, 292, 312, 334, 353, 368, 393, 394, 417,
+      431, 443, 484,
     ];
 
     // first line

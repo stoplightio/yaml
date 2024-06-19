@@ -1,13 +1,13 @@
 import { DiagnosticSeverity } from '@stoplight/types';
-import { describe, expect, it } from 'vitest';
-
 import * as fs from 'fs';
 import * as path from 'path';
-import { parseWithPointers } from '../parseWithPointers';
+import { describe, expect, it } from 'vitest';
 
+import { parseWithPointers } from '../parseWithPointers';
 import { HugeYAML } from './fixtures/huge-yaml';
 
 const HugeJSON = require('./fixtures/huge-json.json');
+
 const diverse = fs.readFileSync(path.join(__dirname, './fixtures/diverse.yaml'), 'utf-8');
 const duplicateMergeKeys = fs.readFileSync(path.join(__dirname, './fixtures/duplicate-merge-keys.yaml'), 'utf-8');
 const mergeKeysWithDuplicateProperties = fs.readFileSync(
@@ -1066,7 +1066,18 @@ bar: false
             { preserveKeyOrder: true, mergeKeys: true },
           );
 
-          expect(Object.keys((data as unknown[])[4] as object)).toEqual(['y', 'r', '100', 'z', '1000', '9', 'x', '1', '0', 'label']);
+          expect(Object.keys((data as unknown[])[4] as object)).toEqual([
+            'y',
+            'r',
+            '100',
+            'z',
+            '1000',
+            '9',
+            'x',
+            '1',
+            '0',
+            'label',
+          ]);
         });
       });
     });

@@ -9,6 +9,7 @@ import {
   YAMLDocument,
   YAMLException,
 } from '@stoplight/yaml-ast-parser';
+
 import { buildJsonPath } from './buildJsonPath';
 import { SpecialMappingKeys } from './consts';
 import { dereferenceAnchor } from './dereferenceAnchor';

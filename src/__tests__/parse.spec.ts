@@ -1,7 +1,8 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import { parse } from '../parse';
 import { describe, expect, it } from 'vitest';
+
+import { parse } from '../parse';
 
 const diverse = fs.readFileSync(path.join(__dirname, './fixtures/diverse.yaml'), 'utf-8');
 

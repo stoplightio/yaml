@@ -1,4 +1,5 @@
 import { JsonPath } from '@stoplight/types';
+
 import { Kind, YAMLNode } from './types';
 import { isObject } from './utils';
 

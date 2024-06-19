@@ -1,9 +1,12 @@
 import { DiagnosticSeverity } from '@stoplight/types';
 import * as fs from 'fs';
 import * as path from 'path';
+import { describe, expect, it } from 'vitest';
+
 import { parseWithPointers } from '../parseWithPointers';
-import * as HugeJSON from './fixtures/huge-json.json';
 import { HugeYAML } from './fixtures/huge-yaml';
+
+const HugeJSON = require('./fixtures/huge-json.json');
 
 const diverse = fs.readFileSync(path.join(__dirname, './fixtures/diverse.yaml'), 'utf-8');
 const duplicateMergeKeys = fs.readFileSync(path.join(__dirname, './fixtures/duplicate-merge-keys.yaml'), 'utf-8');
@@ -14,27 +17,27 @@ const mergeKeysWithDuplicateProperties = fs.readFileSync(
 const spectral481 = fs.readFileSync(path.join(__dirname, './fixtures/spectral-481.yaml'), 'utf-8');
 
 describe('yaml parser', () => {
-  test.each(['test', 1])('parse scalar $s', val => {
+  it.each(['test', 1])('parse scalar $s', val => {
     const result = parseWithPointers(String(val));
-    expect(result.data).toEqual(val);
+    expect(result.data).toStrictEqual(val);
   });
 
-  test('parse sequences', () => {
+  it('parse sequences', () => {
     const result = parseWithPointers('[0, 1, 2]');
     expect(result.data).toEqual([0, 1, 2]);
   });
 
-  test('parse diverse', () => {
+  it('parse diverse', () => {
     const result = parseWithPointers(diverse);
     expect(result).toMatchSnapshot();
   });
 
-  test('parse huge', () => {
+  it('parse huge', () => {
     const result = parseWithPointers(HugeYAML);
     expect(result.data).toEqual(HugeJSON);
   });
 
-  test('given attachComments set to true, parse with comments', () => {
+  it('given attachComments set to true, parse with comments', () => {
     const document = fs.readFileSync(path.join(__dirname, './fixtures/openapi-with-comments.yaml'), 'utf8');
     const result = parseWithPointers(document, { attachComments: true });
 
@@ -208,7 +211,7 @@ describe('yaml parser', () => {
     });
   });
 
-  test('parses string according to YAML 1.2 spec', () => {
+  it('parses string according to YAML 1.2 spec', () => {
     const { data } = parseWithPointers(spectral481);
     expect(data).toHaveProperty(
       'components.schemas.RandomRequest.properties.implicit_string_date.example',
@@ -225,7 +228,7 @@ describe('yaml parser', () => {
   });
 
   describe('report errors', () => {
-    test('unknown tags', () => {
+    it('unknown tags', () => {
       const result = parseWithPointers(`function: !!js/function >
   function foobar() {
     return 'Wow! JS-YAML Rocks!';
@@ -269,7 +272,7 @@ test: !!css >
       ]);
     });
 
-    test('invalid mapping', () => {
+    it('invalid mapping', () => {
       const result = parseWithPointers(
         `prop1: true
 prop2: true
@@ -311,7 +314,7 @@ prop2: true
       ]);
     });
 
-    test('unclosed flow sequence', () => {
+    it('unclosed flow sequence', () => {
       const result = parseWithPointers(`austrian-cities: [
 - Vienna  
 - Graz
@@ -352,7 +355,7 @@ prop2: true
       ]);
     });
 
-    test('unclosed flow mapping', () => {
+    it('unclosed flow mapping', () => {
       const result = parseWithPointers(`austrian-cities: {
 - Vienna  
 - Graz
@@ -395,7 +398,7 @@ prop2: true
   });
 
   describe('dereferencing anchor refs', () => {
-    test('ignore valid refs', () => {
+    it('ignore valid refs', () => {
       const result = parseWithPointers(`austrian-cities: &austrian-cities
   - Vienna
   - Graz
@@ -413,7 +416,7 @@ european-cities:
       });
     });
 
-    test('support circular refs in mapping', () => {
+    it('support circular refs in mapping', () => {
       const result = parseWithPointers(`definitions:
   model: &ref
     foo:
@@ -437,7 +440,7 @@ european-cities:
       expect(() => JSON.stringify(result.data)).not.toThrow();
     });
 
-    test('support circular in refs sequences', () => {
+    it('support circular in refs sequences', () => {
       const result = parseWithPointers(`- &foo
   - test:
     - *foo
@@ -453,7 +456,7 @@ european-cities:
       expect(() => JSON.stringify(result.data)).not.toThrow();
     });
 
-    test('support mixed refs', () => {
+    it('support mixed refs', () => {
       const result = parseWithPointers(`austrian-cities: &austrian-cities
   - Vienna
   - Graz
@@ -479,7 +482,7 @@ european-cities: &cities
       expect(() => JSON.stringify(result.data)).not.toThrow();
     });
 
-    test('support circular nested refs', () => {
+    it('support circular nested refs', () => {
       const result = parseWithPointers(`a: &foo
   - b: &bar
     - true
@@ -498,7 +501,7 @@ european-cities: &cities
       expect(() => JSON.stringify(result.data)).not.toThrow();
     });
 
-    test('insane edge case', () => {
+    it('insane edge case', () => {
       const result = parseWithPointers(`- &foo
   - *foo
   - test:
@@ -514,7 +517,7 @@ european-cities: &cities
       expect(() => JSON.stringify(result.data)).not.toThrow();
     });
 
-    test('insane edge case #2', () => {
+    it('insane edge case #2', () => {
       const result = parseWithPointers(`&ref_1
 a:
   b: &ref_2
@@ -529,19 +532,19 @@ a:
   });
 
   describe('duplicate keys', () => {
-    test('has JSON-ish approach to duplicate keys', () => {
+    it('has JSON-ish approach to duplicate keys', () => {
       expect(parseWithPointers('foo: 0\nfoo: 1\n').data).toEqual({
         foo: 1,
       });
     });
 
-    test('throws when duplicate key is encountered and not in JSON-ish mode', () => {
+    it('throws when duplicate key is encountered and not in JSON-ish mode', () => {
       expect(parseWithPointers.bind(null, 'foo: 0\nfoo: 1\n', { json: false })).toThrow(
         'Duplicate YAML mapping key encountered',
       );
     });
 
-    test('reports duplicate keys', () => {
+    it('reports duplicate keys', () => {
       expect(parseWithPointers('foo: 0\nfoo: 0\n', { ignoreDuplicateKeys: false })).toHaveProperty('diagnostics', [
         {
           code: 'YAMLException',
@@ -612,7 +615,7 @@ a:
 
   describe('merge keys', () => {
     // http://blogs.perl.org/users/tinita/2019/05/reusing-data-with-yaml-anchors-aliases-and-merge-keys.html
-    test('handles plain map value', () => {
+    it('handles plain map value', () => {
       const result = parseWithPointers<any[]>(
         `---
 - &CENTER { x: 1, y: 2 }
@@ -635,7 +638,7 @@ a:
       });
     });
 
-    test('handles sequence of maps', () => {
+    it('handles sequence of maps', () => {
       const result = parseWithPointers<any[]>(
         `---
 - &CENTER { x: 1, y: 2 }
@@ -657,7 +660,7 @@ a:
       });
     });
 
-    test('handles sequence of maps', () => {
+    it('handles sequence of maps', () => {
       const result = parseWithPointers<any[]>(
         `---
 - &CENTER { x: 1, y: 2 }
@@ -679,7 +682,7 @@ a:
       });
     });
 
-    test('handles overrides', () => {
+    it('handles overrides', () => {
       const result = parseWithPointers<any[]>(
         `---
 - &CENTER { x: 1, y: 2 }
@@ -702,7 +705,7 @@ a:
       });
     });
 
-    test('handles overrides #2', () => {
+    it('handles overrides #2', () => {
       const result = parseWithPointers(mergeKeysWithDuplicateProperties, {
         mergeKeys: true,
         ignoreDuplicateKeys: false,
@@ -752,7 +755,7 @@ a:
       });
     });
 
-    test('handles duplicate merge keys', () => {
+    it('handles duplicate merge keys', () => {
       const result = parseWithPointers(duplicateMergeKeys, { mergeKeys: true });
 
       // https://github.com/nodeca/js-yaml/blob/master/test/samples-common/duplicate-merge-key.js
@@ -765,7 +768,7 @@ a:
       });
     });
 
-    test('does not report duplicate merge keys', () => {
+    it('does not report duplicate merge keys', () => {
       const result = parseWithPointers(duplicateMergeKeys, {
         mergeKeys: true,
         ignoreDuplicateKeys: false,
@@ -774,7 +777,7 @@ a:
       expect(result.diagnostics).toEqual([]);
     });
 
-    test('does not report duplicate errors for merged keys', () => {
+    it('does not report duplicate errors for merged keys', () => {
       const result = parseWithPointers(mergeKeysWithDuplicateProperties, {
         mergeKeys: true,
         ignoreDuplicateKeys: false,
@@ -955,7 +958,7 @@ bar: false
 "0": true
 `);
 
-      expect(Object.keys(data)).toEqual(['0', '1', 'foo', 'bar']);
+      expect(Object.keys(data as object)).toEqual(['0', '1', 'foo', 'bar']);
     });
 
     describe('when preserveKeyOrder option is set to true', () => {
@@ -969,7 +972,7 @@ bar: false
           { preserveKeyOrder: true },
         );
 
-        expect(Object.keys(data)).toEqual(['foo', 'bar', '1', '0']);
+        expect(Object.keys(data as object)).toEqual(['foo', 'bar', '1', '0']);
       });
 
       it('handles duplicate properties', () => {
@@ -986,7 +989,7 @@ bar: false
           { preserveKeyOrder: true },
         );
 
-        expect(Object.keys(data)).toEqual(['bar', 'foo', '0', '1']);
+        expect(Object.keys(data as object)).toEqual(['bar', 'foo', '0', '1']);
         expect(data).toStrictEqual({
           bar: false,
           foo: null,
@@ -1003,14 +1006,14 @@ bar: false
           { preserveKeyOrder: true },
         );
 
-        expect(Object.keys(data)).toEqual(['0', '1', '2']);
+        expect(Object.keys(data as object)).toEqual(['0', '1', '2']);
         expect(Object.getOwnPropertySymbols(data)).toEqual([]);
       });
 
       it('handles empty maps', () => {
         const { data } = parseWithPointers(`{}`, { preserveKeyOrder: true });
 
-        expect(Object.keys(data)).toEqual([]);
+        expect(Object.keys(data as object)).toEqual([]);
       });
 
       it('works for nested maps', () => {
@@ -1022,7 +1025,7 @@ bar: false
           { preserveKeyOrder: true },
         );
 
-        expect(Object.keys(data.foo)).toEqual(['1', 'hello', '0']);
+        expect(Object.keys((data as any).foo as object)).toEqual(['1', 'hello', '0']);
       });
     });
 
@@ -1043,7 +1046,7 @@ bar: false
           { preserveKeyOrder: true },
         );
 
-        expect(Object.keys(data[4])).toEqual(['<<', 'x', '1', '0', 'label']);
+        expect(Object.keys((data as unknown[])[4] as object)).toEqual(['<<', 'x', '1', '0', 'label']);
       });
 
       describe('when mergeKeys option is set to true', () => {
@@ -1063,7 +1066,18 @@ bar: false
             { preserveKeyOrder: true, mergeKeys: true },
           );
 
-          expect(Object.keys(data[4])).toEqual(['y', 'r', '100', 'z', '1000', '9', 'x', '1', '0', 'label']);
+          expect(Object.keys((data as unknown[])[4] as object)).toEqual([
+            'y',
+            'r',
+            '100',
+            'z',
+            '1000',
+            '9',
+            'x',
+            '1',
+            '0',
+            'label',
+          ]);
         });
       });
     });

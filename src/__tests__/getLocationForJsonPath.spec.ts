@@ -1,5 +1,7 @@
 import * as fs from 'fs';
 import { join } from 'path';
+import { describe, expect, it } from 'vitest';
+
 import { getLocationForJsonPath } from '../getLocationForJsonPath';
 import { parseWithPointers } from '../parseWithPointers';
 
@@ -17,7 +19,7 @@ describe('getLocationForJsonPath', () => {
   describe('pet store fixture', () => {
     const result = parseWithPointers(petStore);
 
-    test.each`
+    it.each`
       start       | end          | path                                             | closest
       ${[9, 10]}  | ${[10, 29]}  | ${['info', 'contact']}                           | ${false}
       ${[10, 11]} | ${[10, 29]}  | ${['info', 'contact', 'email']}                  | ${false}
@@ -57,7 +59,7 @@ describe('getLocationForJsonPath', () => {
   describe('simple fixture', () => {
     const result = parseWithPointers(simple);
 
-    test.each`
+    it.each`
       start      | end        | path
       ${[0, 7]}  | ${[0, 12]} | ${['hello']}
       ${[1, 8]}  | ${[2, 13]} | ${['address']}
@@ -81,7 +83,7 @@ describe('getLocationForJsonPath', () => {
   describe('merge keys fixture', () => {
     const result = parseWithPointers(spectralSpecMergeKeys, { mergeKeys: true });
 
-    test.each`
+    it.each`
       start       | end         | path
       ${[27, 23]} | ${[27, 39]} | ${['paths', '/pets', 'post', 'responses', 'default', 'description']}
       ${[28, 18]} | ${[31, 50]} | ${['paths', '/pets', 'post', 'responses', 'default', 'content']}
@@ -107,7 +109,7 @@ describe('getLocationForJsonPath', () => {
 foo: 4`,
     );
 
-    test.each`
+    it.each`
       start     | end       | path
       ${[1, 5]} | ${[1, 6]} | ${['foo']}
     `('should return proper location for given JSONPath $path', ({ start, end, path }) => {
@@ -129,7 +131,7 @@ foo: 4`,
   describe('duplicate merge keys fixture', () => {
     const result = parseWithPointers(duplicateMergeKeys, { mergeKeys: true });
 
-    test.each`
+    it.each`
       start      | end        | path
       ${[2, 8]}  | ${[2, 9]}  | ${['x']}
       ${[2, 14]} | ${[2, 15]} | ${['y']}
@@ -167,7 +169,7 @@ foo: 4`,
       { mergeKeys: true },
     );
 
-    test.each`
+    it.each`
       start      | end        | path
       ${[2, 19]} | ${[2, 20]} | ${[4, 'y']}
       ${[3, 12]} | ${[3, 14]} | ${[4, 'r']}
@@ -191,7 +193,7 @@ foo: 4`,
   describe('spectral bug #170 fixture', () => {
     const result = parseWithPointers(spectral170);
 
-    test('should return proper location for empty mapping value', () => {
+    it('should return proper location for empty mapping value', () => {
       expect(
         getLocationForJsonPath(result, ['definitions', 'AnotherDefinition', 'properties', 'special', 'description']),
       ).toEqual({
@@ -213,7 +215,7 @@ foo: 4`,
     const resultCRLF = parseWithPointers(spectralCRLF);
     const resultLF = parseWithPointers(spectralLF);
 
-    test.each`
+    it.each`
       start     | end        | path                   | closest
       ${[0, 0]} | ${[5, 9]}  | ${['servers']}         | ${true}
       ${[2, 5]} | ${[4, 13]} | ${['info']}            | ${true}
@@ -248,7 +250,7 @@ foo: 4`,
   describe('shifted fixture', () => {
     const result = parseWithPointers(`--- foobar: bar`);
 
-    test.each`
+    it.each`
       start     | end        | path         | closest
       ${[0, 4]} | ${[0, 15]} | ${['paths']} | ${true}
     `('should return proper location for given JSONPath $path', ({ start, end, path, closest }) => {
@@ -278,7 +280,7 @@ foo: 4`,
 - bar
 `);
 
-    test.each`
+    it.each`
       start     | end       | path      | closest
       ${[]}     | ${[]}     | ${[0]}    | ${false}
       ${[0, 0]} | ${[3, 5]} | ${[0]}    | ${true}
@@ -316,7 +318,7 @@ bar: null
 baz:
 `);
 
-    test.each`
+    it.each`
       start     | end       | path       | closest
       ${[0, 5]} | ${[0, 6]} | ${['foo']} | ${false}
       ${[0, 5]} | ${[0, 6]} | ${['foo']} | ${true}
@@ -344,7 +346,7 @@ baz:
     });
   });
 
-  test('should handle null-ish items', () => {
+  it('should handle null-ish items', () => {
     const result = parseWithPointers(`----~
 foo: bar
 `);

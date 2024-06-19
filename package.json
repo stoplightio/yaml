@@ -23,31 +23,44 @@
     "**/*"
   ],
   "engines": {
-    "node": ">=10.8"
+    "node": ">=16"
   },
   "scripts": {
     "build": "sl-scripts build",
     "commit": "git-cz",
-    "lint": "tslint -c tslint.json -p tsconfig.json 'src/**/*.ts'",
+    "lint": "eslint --ext .js,.jsx,.ts,.tsx .",
     "lint.fix": "yarn lint --fix",
     "release": "sl-scripts release",
     "release.docs": "sl-scripts release:docs",
     "release.dryRun": "sl-scripts release --dry-run --debug",
-    "test": "jest",
-    "test.prod": "yarn lint && yarn test --coverage --no-cache",
-    "test.update": "yarn test --updateSnapshot",
-    "test.watch": "yarn test --watch"
+    "test": "vitest run",
+    "test.prod": "yarn lint && vitest run --coverage",
+    "test.update": "vitest run --update",
+    "test.watch": "vitest",
+    "prepare": "husky"
   },
   "dependencies": {
     "@stoplight/ordered-object-literal": "^1.0.5",
     "@stoplight/types": "^14.1.1",
     "@stoplight/yaml-ast-parser": "0.0.50",
-    "tslib": "^2.2.0"
+    "tslib": "^2.6.3"
   },
   "devDependencies": {
-    "@stoplight/scripts": "3.1.0",
-    "tslint-config-stoplight": "^1.3.0",
-    "typescript": "3.5.3"
+    "@stoplight/eslint-config": "3.0.0",
+    "@stoplight/scripts": "10.0.0",
+    "@typescript-eslint/eslint-plugin": "^5.7.0",
+    "@typescript-eslint/parser": "^5.7.0",
+    "@vitest/coverage-v8": "^1.6.0",
+    "eslint": "^8.21.0",
+    "eslint-plugin-import": "^2.26.0",
+    "eslint-plugin-jest": "^28.6.0",
+    "eslint-plugin-prettier": "^4.2.1",
+    "eslint-plugin-react": "^7.30.1",
+    "eslint-plugin-react-hooks": "^4.6.0",
+    "eslint-plugin-simple-import-sort": "^7.0.0",
+    "prettier": "^2.3.1",
+    "typescript": "5.4.5",
+    "vitest": "^1.6.0"
   },
   "lint-staged": {
     "*.{ts,tsx}$": [

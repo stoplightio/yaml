@@ -1,4 +1,5 @@
 import { GetLocationForJsonPath, ILocation, JsonPath, Optional } from '@stoplight/types';
+
 import { SpecialMappingKeys } from './consts';
 import { lineForPosition } from './lineForPosition';
 import { Kind, YAMLMapping, YAMLNode, YamlParserResult } from './types';

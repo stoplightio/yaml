@@ -25,36 +25,29 @@ commands:
 
 jobs:
   # https://nodejs.org/en/about/releases/
-  test_node_lts:
+  test_node:
     docker:
-      - image: circleci/node:lts
+      - image: cimg/node:18.20
     steps:
       - checkout
-      - run:
-          name: Download cc-test-reporter
-          command: |
-            curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
-            chmod +x ./cc-test-reporter
-      - run:
-          name: cc-before
-          command: |
-            ./cc-test-reporter before-build
+      # - run:
+      #     name: Download cc-test-reporter
+      #     command: |
+      #       curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
+      #       chmod +x ./cc-test-reporter
+      # - run:
+      #     name: cc-before
+      #     command: |
+      #       ./cc-test-reporter before-build
       - install_and_test
-      - run:
-          name: cc-after
-          command: |
-            ./cc-test-reporter after-build --coverage-input-type lcov --exit-code $?
-
-  test_node_latest:
-    docker:
-      - image: circleci/node:latest
-    steps:
-      - checkout
-      - install_and_test
+      # - run:
+      #     name: cc-after
+      #     command: |
+      #       ./cc-test-reporter after-build --coverage-input-type lcov --exit-code $?
 
   release:
     docker:
-      - image: circleci/node:lts
+      - image: cimg/node:18.20
     steps:
       - checkout
       - run: yarn
@@ -65,12 +58,10 @@ workflows:
   version: 2
   test_and_release:
     jobs:
-      - test_node_lts
-      - test_node_latest
+      - test_node
       - release:
           filters:
             branches:
               only: master
           requires:
-            - test_node_lts
-            - test_node_latest
+            - test_node

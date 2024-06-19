@@ -1,4 +1,5 @@
 import { GetJsonPathForPosition } from '@stoplight/types';
+
 import { buildJsonPath } from './buildJsonPath';
 import { Kind, YAMLNode, YamlParserResult } from './types';
 import { isObject } from './utils';

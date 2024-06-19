@@ -1,17 +1,17 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`parse dereferencing anchor refs insane edge case 1`] = `
-Array [
-  Array [
-    Array [
+exports[`parse > dereferencing anchor refs > insane edge case 1`] = `
+[
+  [
+    [
       null,
-      Object {
-        "test": Array [
+      {
+        "test": [
           null,
         ],
       },
-      Object {
-        "abc": Object {
+      {
+        "abc": {
           "a": null,
           "c": null,
           "foo": 2,
@@ -19,17 +19,17 @@ Array [
         },
       },
     ],
-    Object {
-      "test": Array [
-        Array [
+    {
+      "test": [
+        [
           null,
-          Object {
-            "test": Array [
+          {
+            "test": [
               null,
             ],
           },
-          Object {
-            "abc": Object {
+          {
+            "abc": {
               "a": null,
               "c": null,
               "foo": 2,
@@ -39,18 +39,18 @@ Array [
         ],
       ],
     },
-    Object {
-      "abc": Object {
+    {
+      "abc": {
         "a": null,
-        "c": Array [
+        "c": [
           null,
-          Object {
-            "test": Array [
+          {
+            "test": [
               null,
             ],
           },
-          Object {
-            "abc": Object {
+          {
+            "abc": {
               "a": null,
               "c": null,
               "foo": 2,
@@ -59,7 +59,7 @@ Array [
           },
         ],
         "foo": 2,
-        "x": Object {
+        "x": {
           "a": null,
           "c": null,
           "foo": 2,

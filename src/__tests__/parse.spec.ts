@@ -1,21 +1,22 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { parse } from '../parse';
+import { describe, expect, it } from 'vitest';
 
 const diverse = fs.readFileSync(path.join(__dirname, './fixtures/diverse.yaml'), 'utf-8');
 
 describe('parse', () => {
-  test.each(['test', 1])('parse scalar $s', val => {
+  it.each(['test', 1])('parse scalar $s', val => {
     const result = parse(String(val));
     expect(result).toEqual(val);
   });
 
-  test('parse sequences', () => {
+  it('parse sequences', () => {
     const result = parse('[0, 1, 2]');
     expect(result).toEqual([0, 1, 2]);
   });
 
-  test('parse diverse', () => {
+  it('parse diverse', () => {
     const result = parse(diverse);
     expect(result).toEqual({
       content: `Or we
@@ -43,7 +44,7 @@ to save space`,
   });
 
   describe('dereferencing anchor refs', () => {
-    test('ignore valid refs', () => {
+    it('ignore valid refs', () => {
       const result = parse(`austrian-cities: &austrian-cities
   - Vienna
   - Graz
@@ -61,7 +62,7 @@ european-cities:
       });
     });
 
-    test('support circular refs in mapping', () => {
+    it('support circular refs in mapping', () => {
       const result = parse(`definitions:
   model: &ref
     foo:
@@ -85,7 +86,7 @@ european-cities:
       expect(() => JSON.stringify(result)).not.toThrow();
     });
 
-    test('support circular in refs sequences', () => {
+    it('support circular in refs sequences', () => {
       const result = parse(`- &foo
   - test:
     - *foo
@@ -101,7 +102,7 @@ european-cities:
       expect(() => JSON.stringify(result)).not.toThrow();
     });
 
-    test('support mixed refs', () => {
+    it('support mixed refs', () => {
       const result = parse(`austrian-cities: &austrian-cities
   - Vienna
   - Graz
@@ -127,7 +128,7 @@ european-cities: &cities
       expect(() => JSON.stringify(result)).not.toThrow();
     });
 
-    test('support circular nested refs', () => {
+    it('support circular nested refs', () => {
       const result = parse(`a: &foo
   - b: &bar
     - true
@@ -146,7 +147,7 @@ european-cities: &cities
       expect(() => JSON.stringify(result)).not.toThrow();
     });
 
-    test('insane edge case', () => {
+    it('insane edge case', () => {
       const result = parse(`- &foo
   - *foo
   - test:

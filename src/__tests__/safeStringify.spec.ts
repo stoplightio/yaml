@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vitest';
 import * as fs from 'fs';
 import * as path from 'path';
 import { parseWithPointers } from '../parseWithPointers';
@@ -58,7 +59,7 @@ ${description
 `);
   });
 
-  test('should use anchors for same objects by default', () => {
+  it('should use anchors for same objects by default', () => {
     const obj = { foo: 'bar' };
 
     expect(safeStringify({ a: obj, b: obj })).toEqual(`a: &ref_0
@@ -67,7 +68,7 @@ b: *ref_0
 `);
   });
 
-  test('should not use anchors for same objects if noRefs is truthy', () => {
+  it('should not use anchors for same objects if noRefs is truthy', () => {
     const obj = { foo: 'bar' };
 
     expect(safeStringify({ a: obj, b: obj }, { noRefs: true })).toEqual(`a:
@@ -77,13 +78,13 @@ b:
 `);
   });
 
-  test('should stringify strings containing numbers with leading 0 (but are not octals) correctly', () => {
+  it('should stringify strings containing numbers with leading 0 (but are not octals) correctly', () => {
     const obj = { value: '012345678' };
 
     expect(safeStringify(obj, { noRefs: true })).toEqual(`value: '012345678'\n`);
   });
 
-  test('should correctly escape anchors', () => {
+  it('should correctly escape anchors', () => {
     const obj = { value: 'test' };
 
     expect(safeStringify([obj, obj])).toEqual(`- &ref_0
@@ -92,7 +93,7 @@ b:
 `);
   });
 
-  test('should stringify big integers', () => {
+  it('should stringify big integers', () => {
     const obj = { value: BigInt('1267650600228229401496703205376') };
 
     expect(safeStringify(obj)).toEqual(`value: 1267650600228229401496703205376\n`);

@@ -1,7 +1,8 @@
 import { lineForPosition } from '../lineForPosition';
+import { describe, expect, it } from 'vitest';
 
 describe('lineForPosition', () => {
-  test('simple fixture', () => {
+  it('simple fixture', () => {
     const lines = [13, 22, 36];
     // first line
     expect(lineForPosition(0, lines)).toEqual(0);
@@ -15,7 +16,7 @@ describe('lineForPosition', () => {
     expect(lineForPosition(39, lines)).toEqual(3);
   });
 
-  test('diverse fixture', () => {
+  it('diverse fixture', () => {
     const lines = [
       4,
       49,

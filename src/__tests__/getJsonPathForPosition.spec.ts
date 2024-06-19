@@ -2,6 +2,7 @@ import * as fs from 'fs';
 import { join } from 'path';
 import { getJsonPathForPosition } from '../getJsonPathForPosition';
 import { parseWithPointers } from '../parseWithPointers';
+import { describe, expect, it } from 'vitest';
 
 const petStore = fs.readFileSync(join(__dirname, './fixtures/petstore.oas2.yaml'), 'utf-8');
 const demo = fs.readFileSync(join(__dirname, './fixtures/demo.yaml'), 'utf-8');
@@ -22,7 +23,7 @@ describe('getJsonPathForPosition', () => {
   describe('emptyValues fixture', () => {
     const result = parseWithPointers(emptyValues);
 
-    test.each`
+    it.each`
       line | character | path
       ${2} | ${9}      | ${['paths']}
     `('should return proper json path for line $line and character $character', ({ line, character, path }) => {
@@ -33,7 +34,7 @@ describe('getJsonPathForPosition', () => {
   describe('simple fixture', () => {
     const result = parseWithPointers(simple);
 
-    test.each`
+    it.each`
       line | character | path
       ${0} | ${0}      | ${['hello']}
       ${0} | ${13}     | ${void 0}
@@ -50,7 +51,7 @@ describe('getJsonPathForPosition', () => {
   describe('demo fixture', () => {
     const result = parseWithPointers(demo);
 
-    test.each`
+    it.each`
       line   | character | path
       ${8}   | ${0}      | ${['map', 'Block style']}
       ${8}   | ${19}     | ${['map', 'Block style']}
@@ -106,7 +107,7 @@ describe('getJsonPathForPosition', () => {
   describe('petStore fixture', () => {
     const result = parseWithPointers(petStore);
 
-    test.each`
+    it.each`
       line  | character | path
       ${0}  | ${0}      | ${['swagger']}
       ${1}  | ${0}      | ${['info']}
